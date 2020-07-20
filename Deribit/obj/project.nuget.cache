@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "UATMIX0NDOT4AKxF46BMnebrIEeEp+c2vCwXyR3ET+GjNOub14cnfVzZH+7fU3GZBlmiPar6Ug7hiJRxYYaVkw==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\bbq80\\source\\repos\\DeribitClient\\Deribit\\Deribit.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\bbq80\\.nuget\\packages\\newtonsoft.json\\12.0.3\\newtonsoft.json.12.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}
