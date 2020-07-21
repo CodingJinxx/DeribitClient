@@ -6,6 +6,6 @@ namespace Deribit.Core.Messages
 {
     public interface IResponse<T>
     {
-        public T FromJson(string json);
+        //public ResponseBase<T> FromJson(string json);
     }
 }

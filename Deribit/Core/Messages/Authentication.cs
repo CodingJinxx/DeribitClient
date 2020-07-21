@@ -10,6 +10,8 @@ namespace Deribit.Core.Messages
 {
     public class AuthenticationMessage : IMessage
     {
+        [Newtonsoft.Json.JsonIgnore]
+        public string MethodName { get => "/public/auth"; }
         public string grant_type { get; set; }
         public string client_id { get; set; }
         public string client_secret { get; set; }
@@ -20,6 +22,8 @@ namespace Deribit.Core.Messages
         public string data { get; set; }
         public string state { get; set; }
         public string scope { get; set; }
+
+
 
         public string GetJson()
         {
@@ -63,30 +67,29 @@ namespace Deribit.Core.Messages
                 }
                 if(data != null)
                 {
-                    throw new 
+                    throw new ExcessiveParameterException(this.GetType().Name, nameof(data));
                 }
             }
 
             RequestBase<AuthenticationMessage> request = new RequestBase<AuthenticationMessage>();
-            request.@params = this;
 
-            return JsonConvert.SerializeObject(request);
+            JsonSerializerSettings settings = new JsonSerializerSettings();
+            settings.NullValueHandling = NullValueHandling.Ignore;
+            return JsonConvert.SerializeObject(request, settings);
         }
     }
 
     public class AuthenticationResponse : IResponse<AuthenticationResponse>
     {
-        public int id { get; private set; }
-        public int jsonrpc { get; private set; }
-        public int result { get; private set; }
         public string access_token { get; private set; }
         public string refresh_token { get; private set; }
         public string scope { get; private set; }
         public string state { get; private set; }
         public string token_type { get; private set; }
-        public AuthenticationResponse FromJson(string json)
+        public static ResponseBase<AuthenticationResponse> FromJson(string json)
         {
-            throw new NotImplementedException();
+            ResponseBase<AuthenticationResponse> response = JsonConvert.DeserializeObject<ResponseBase<AuthenticationResponse>>(json);
+            return response;
         }
     }
 }
