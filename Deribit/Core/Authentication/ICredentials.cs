@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Deribit.Core.Authentication
 {
-    interface ICredentials
+    public interface ICredentials
     {
         public string ClientID { get; set; }
         public string ClientSecret { get; set; }

@@ -17,11 +17,11 @@ namespace Deribit.Core.Types
 
         public static bool Contains(string input)
         {
-            if(input != ClientCredentials || input != ClientSignature || input != RefreshToken)
+            if(input == ClientCredentials || input == ClientSignature || input == RefreshToken)
             {
-                return false;
+                return true;
             }
-            return true;
+            return false;
         }
     }
 }

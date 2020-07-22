@@ -10,25 +10,30 @@ using Deribit.Core.Messages;
 
 namespace Deribit.Core.Connection
 {
-    class Connection : IObservable<string>
+    public class Connection : IObservable<string>
     {
+        private const int INITIAL_BUFFERSIZE = 1024;
+        private const int BUFFERSIZE_INCREMENT = 1024;
         public bool Connected { get; private set; }
         public bool Sending { get; private set; }
-        public bool Recieving { get; private set; }
+        public bool Receiving { get; private set; }
 
         private ClientWebSocket _webSocket;
         private ICredentials _credentials;
         private List<IObserver<string>> _observers;
         private CancellationTokenSource _tokenSource;
         private Queue<IMessage> _messages;
-        
+
         public Connection(ICredentials credentials, CancellationTokenSource tokenSource)
         {
             this._credentials = credentials;
             this._tokenSource = tokenSource;
             _webSocket = new ClientWebSocket();
+            _observers = new List<IObserver<string>>();
+            _messages = new Queue<IMessage>();
 
-            _establishConnection();
+            _establishConnection().Wait();
+            _startReceiving();
         }
 
         public IDisposable Subscribe(IObserver<string> observer)
@@ -53,22 +58,45 @@ namespace Deribit.Core.Connection
             Connected = true;
         }
 
-        private async Task _startRecieving()
+        private async Task _startReceiving()
         {
-            ArraySegment<byte> buffer = new ArraySegment<byte>();
+            var buffer = new byte[INITIAL_BUFFERSIZE];
             while (!_tokenSource.Token.IsCancellationRequested)
             {
-                Recieving = true;
-                await _webSocket.ReceiveAsync(buffer, _tokenSource.Token);
+                Receiving = true;
+                int free = buffer.Length;
+                int offset = 0;
+                while (true)
+                {
+                    var result = await _webSocket.ReceiveAsync(new ArraySegment<byte>(buffer, offset, free), _tokenSource.Token);
+                    offset += result.Count;
+                    free -= result.Count;
+                    if (result.EndOfMessage)
+                    {
+                        break;
+                    }
+
+                    if (free == 0)
+                    {
+                        var newSize = buffer.Length + BUFFERSIZE_INCREMENT;
+
+                        var newBuffer = new byte[newSize];
+                        Array.Copy(buffer, newBuffer, offset);
+                        buffer = newBuffer;
+                        free = buffer.Length - offset;
+                    }
+                }
+                
+
+                
 
                 string response = Encoding.UTF8.GetString(buffer);
-                
                 foreach(var observer in _observers)
                 {
                     observer.OnNext(response);
                 }
             }
-            Recieving = false;
+            Receiving = false;
         }
 
         private async Task _startSending()
