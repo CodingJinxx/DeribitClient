@@ -38,10 +38,11 @@ namespace DeribitTests.Core
             Assert.True(connection.Connected);
         }
         [Fact]
-        public void Authenticate()
+        public async void Authenticate()
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
             Connection connection = new Connection(credentials, cancellationTokenSource);
+            connection.StartReceiving();
 
             Assert.True(connection.Connected);
 

@@ -72,6 +72,10 @@ namespace Deribit.Core.Messages
             }
 
             RequestBase<AuthenticationMessage> request = new RequestBase<AuthenticationMessage>();
+            request.id = "0";
+            request.method = this.MethodName;
+            request.jsonrpc = "2.0";
+            request.@params = this;
 
             JsonSerializerSettings settings = new JsonSerializerSettings();
             settings.NullValueHandling = NullValueHandling.Ignore;

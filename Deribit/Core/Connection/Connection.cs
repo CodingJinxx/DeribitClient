@@ -33,7 +33,6 @@ namespace Deribit.Core.Connection
             _messages = new Queue<IMessage>();
 
             _establishConnection().Wait();
-            _startReceiving();
         }
 
         public IDisposable Subscribe(IObserver<string> observer)
@@ -58,7 +57,7 @@ namespace Deribit.Core.Connection
             Connected = true;
         }
 
-        private async Task _startReceiving()
+        public async Task StartReceiving()
         {
             var buffer = new byte[INITIAL_BUFFERSIZE];
             while (!_tokenSource.Token.IsCancellationRequested)
@@ -109,18 +108,19 @@ namespace Deribit.Core.Connection
                     return;
                 }
 
-                ArraySegment<byte> message = Encoding.UTF8.GetBytes(_messages.Dequeue().GetJson());
+                string rawmesage = _messages.Dequeue().GetJson();
+                ArraySegment<byte> message = Encoding.UTF8.GetBytes(rawmesage);
                 Sending = true;
                 await _webSocket.SendAsync(message, WebSocketMessageType.Text, true, _tokenSource.Token);
             }
         }
 
-        public void SendMessage(IMessage message)
+        public async void SendMessage(IMessage message)
         {
             _messages.Enqueue(message);
             if (!Sending)
             {
-                _startSending();
+                await _startSending();
             }
         }
     }

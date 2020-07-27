@@ -10,8 +10,8 @@ namespace Deribit.Core.Messages
     {
         public RequestBase()
         {
-            Startup startup = Startup.GetInstance();
-            var apiSettings = JsonConvert.DeserializeObject<ApiSettings>(startup.Configuration.GetSection(ApiSettings.SectionName).Value);
+            //Startup startup = Startup.GetInstance();
+            //var apiSettings = JsonConvert.DeserializeObject<ApiSettings>(startup.Configuration.GetSection(ApiSettings.SectionName).Value);
         }
         public string jsonrpc { get; set; }
         public string id { get; set; }

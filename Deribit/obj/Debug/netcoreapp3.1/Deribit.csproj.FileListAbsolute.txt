@@ -9,3 +9,12 @@ C:\Users\bbq80\source\repos\DeribitClient\Deribit\bin\Debug\netcoreapp3.1\Deribi
 C:\Users\bbq80\source\repos\DeribitClient\Deribit\obj\Debug\netcoreapp3.1\Deribit.dll
 C:\Users\bbq80\source\repos\DeribitClient\Deribit\obj\Debug\netcoreapp3.1\Deribit.pdb
 C:\Users\bbq80\source\repos\DeribitClient\Deribit\obj\Debug\netcoreapp3.1\Deribit.csproj.CoreCompileInputs.cache
+C:\Users\Jay\source\repos\DeribitClient\Deribit\bin\Debug\netcoreapp3.1\appsettings.json
+C:\Users\Jay\source\repos\DeribitClient\Deribit\bin\Debug\netcoreapp3.1\Deribit.deps.json
+C:\Users\Jay\source\repos\DeribitClient\Deribit\bin\Debug\netcoreapp3.1\Deribit.dll
+C:\Users\Jay\source\repos\DeribitClient\Deribit\bin\Debug\netcoreapp3.1\Deribit.pdb
+C:\Users\Jay\source\repos\DeribitClient\Deribit\obj\Debug\netcoreapp3.1\Deribit.csprojAssemblyReference.cache
+C:\Users\Jay\source\repos\DeribitClient\Deribit\obj\Debug\netcoreapp3.1\Deribit.AssemblyInfoInputs.cache
+C:\Users\Jay\source\repos\DeribitClient\Deribit\obj\Debug\netcoreapp3.1\Deribit.AssemblyInfo.cs
+C:\Users\Jay\source\repos\DeribitClient\Deribit\obj\Debug\netcoreapp3.1\Deribit.dll
+C:\Users\Jay\source\repos\DeribitClient\Deribit\obj\Debug\netcoreapp3.1\Deribit.pdb
