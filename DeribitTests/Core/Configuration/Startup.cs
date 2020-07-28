@@ -9,7 +9,7 @@ namespace DeribitTests.Core.Configuration
 {
     public class Startup
     {
-        private bool IsCI = false;
+        public bool IsCI = false;
 
         public IConfigurationRoot Configuration { get; private set; }
 
