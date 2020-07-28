@@ -1,11 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Newtonsoft.Json;
 
 namespace Deribit.Core.Messages
 {
     public interface IResponse<T>
     {
-        //public ResponseBase<T> FromJson(string json);
+        public static ResponseBase<T> FromJson(string json)
+        {
+            ResponseBase<T> response = JsonConvert.DeserializeObject<ResponseBase<T>>(json);
+            return response;
+        }
     }
 }

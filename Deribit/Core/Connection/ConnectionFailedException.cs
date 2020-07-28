@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Net.WebSockets;
 
 namespace Deribit.Core.Connection
