@@ -23,8 +23,19 @@ namespace DeribitTests.Core
         public ConnectionTests()
         {
             this.settings = Startup.GetInstance();
-            string client_id = settings.Configuration.GetSection("UserSettings").GetSection("Client_Id").Value;
-            string client_secret = settings.Configuration.GetSection("UserSettings").GetSection("Client_Secret").Value;
+            string client_id, client_secret;
+
+            if (this.settings.IsCI)
+            {
+                client_id = Environment.GetEnvironmentVariable("CLIENT_ID");
+                client_secret = Environment.GetEnvironmentVariable("CLIENT_SECRET");
+            }
+            else
+            {
+                client_id = settings.Configuration.GetSection("UserSettings").GetSection("Client_Id").Value;
+                client_secret = settings.Configuration.GetSection("UserSettings").GetSection("Client_Secret").Value;
+            }
+           
             Uri server_url = new Uri(settings.Configuration.GetSection("ApiSettings").GetSection("Server_URL").Value);
             this.credentials = new Credentials(client_id, client_secret, server_url);
         }

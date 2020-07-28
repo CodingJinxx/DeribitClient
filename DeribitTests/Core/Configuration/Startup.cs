@@ -1,11 +1,16 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using Deribit.Core.Configuration;
 using Microsoft.Extensions.Configuration;
+using Microsoft.VisualStudio.TestPlatform.PlatformAbstractions;
+
 
 namespace DeribitTests.Core.Configuration
 {
     public class Startup
     {
+        public bool IsCI = false;
+
         public IConfigurationRoot Configuration { get; private set; }
 
         public static Startup GetInstance()
@@ -22,6 +27,8 @@ namespace DeribitTests.Core.Configuration
 
         private Startup()
         {
+            IsCI = Environment.GetEnvironmentVariable("CI") == "true";
+
             Configuration = BuildConfiguration();
         }
 
@@ -31,7 +38,7 @@ namespace DeribitTests.Core.Configuration
             IConfigurationBuilder builder = new ConfigurationBuilder()
                 .SetBasePath(basepath)
                 .AddJsonFile("testsettings.json", false)
-                .AddJsonFile("usersettings.json", false);
+                .AddJsonFile("usersettings.json", IsCI);
 
             return builder.Build();
         }
