@@ -14,25 +14,32 @@ namespace Deribit.Core.Connection
     {
         private const int INITIAL_BUFFERSIZE = 1024;
         private const int BUFFERSIZE_INCREMENT = 1024;
+
         public bool Connected { get; private set; }
         public bool Sending { get; private set; }
         public bool Receiving { get; private set; }
 
         private ClientWebSocket _webSocket;
+        // ReSharper disable once NotAccessedField.Local
         private ICredentials _credentials;
         private List<IObserver<string>> _observers;
         private CancellationTokenSource _tokenSource;
         private Queue<IMessage> _messages;
+        private Uri _server_address;
 
-        public Connection(ICredentials credentials, CancellationTokenSource tokenSource)
+        public Connection(ICredentials credentials, Uri serverAddress, CancellationTokenSource tokenSource)
         {
             this._credentials = credentials;
+            this._server_address = serverAddress;
             this._tokenSource = tokenSource;
-            _webSocket = new ClientWebSocket();
-            _observers = new List<IObserver<string>>();
-            _messages = new Queue<IMessage>();
+            this._webSocket = new ClientWebSocket();
+            this._observers = new List<IObserver<string>>();
+            this._messages = new Queue<IMessage>();
 
             _establishConnection().Wait();
+#pragma warning disable 4014
+            _startReceiving();
+#pragma warning restore 4014
         }
 
         public IDisposable Subscribe(IObserver<string> observer)
@@ -47,18 +54,19 @@ namespace Deribit.Core.Connection
 
         private async Task _establishConnection()
         {
-            await _webSocket.ConnectAsync(_credentials.ServerURL, _tokenSource.Token);
+            await _webSocket.ConnectAsync(_server_address, _tokenSource.Token);
 
             if(_webSocket.State != WebSocketState.Open)
             {
-                throw new ConnectionFailedException(_credentials.ServerURL, _webSocket.State);
+                throw new ConnectionFailedException(_server_address, _webSocket.State);
             }
 
             Connected = true;
         }
 
-        public async Task StartReceiving()
+        private async Task _startReceiving()
         {
+            if(Receiving) throw new InternalConnectionErrorException("Already receiving");
             var buffer = new byte[INITIAL_BUFFERSIZE];
             while (!_tokenSource.Token.IsCancellationRequested)
             {
@@ -85,10 +93,6 @@ namespace Deribit.Core.Connection
                         free = buffer.Length - offset;
                     }
                 }
-                
-
-                
-
                 string response = Encoding.UTF8.GetString(buffer);
                 foreach(var observer in _observers)
                 {
@@ -108,8 +112,8 @@ namespace Deribit.Core.Connection
                     return;
                 }
 
-                string rawmesage = _messages.Dequeue().GetJson();
-                ArraySegment<byte> message = Encoding.UTF8.GetBytes(rawmesage);
+                string rawMessage = _messages.Dequeue().GetJson();
+                ArraySegment<byte> message = Encoding.UTF8.GetBytes(rawMessage);
                 Sending = true;
                 await _webSocket.SendAsync(message, WebSocketMessageType.Text, true, _tokenSource.Token);
             }

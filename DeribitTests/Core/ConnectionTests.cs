@@ -1,106 +1,108 @@
 ﻿using System;
+using System.IO;
 using System.Threading;
-using System.Threading.Tasks;
-using Deribit.Core;
 using Deribit.Core.Authentication;
 using Deribit.Core.Messages;
 using Deribit.Core.Connection;
 using Deribit.Core.Types;
-using DeribitTests.Core.Configuration;
 using Microsoft.Extensions.Configuration;
-
 using Xunit;
-using Xunit.Sdk;
 
 
 namespace DeribitTests.Core
 {
     public class ConnectionTests
     {
-        private Startup settings;
         private Credentials credentials;
-
+        private Uri server_address;
+        
         public ConnectionTests()
         {
-            this.settings = Startup.GetInstance();
-            string client_id, client_secret;
+            var isRunningInsideAction = Environment.GetEnvironmentVariable("CI") == "true";
 
-            if (this.settings.IsCI)
+            IConfigurationRoot config = null;
+            string clientId, clientSecret;
+            if (isRunningInsideAction)
             {
-                client_id = Environment.GetEnvironmentVariable("CLIENT_ID");
-                client_secret = Environment.GetEnvironmentVariable("CLIENT_SECRET");
+                clientId = Environment.GetEnvironmentVariable("CLIENT_ID");
+                clientSecret = Environment.GetEnvironmentVariable("CLIENT_SECRET");
+                server_address = new Uri(Environment.GetEnvironmentVariable("SERVER_ADDRESS"));
             }
             else
             {
-                client_id = settings.Configuration.GetSection("UserSettings").GetSection("Client_Id").Value;
-                client_secret = settings.Configuration.GetSection("UserSettings").GetSection("Client_Secret").Value;
+                string basePath = Directory.GetCurrentDirectory();
+                IConfigurationBuilder builder = new ConfigurationBuilder()
+                    .SetBasePath(basePath)
+                    .AddJsonFile("testsettings.json", false)
+                    .AddJsonFile("usersettings.json", false);
+
+                config = builder.Build();
+
+                clientId = config.GetSection("UserSettings").GetSection("Client_Id").Value;
+                clientSecret = config.GetSection("UserSettings").GetSection("Client_Secret").Value;
             }
-           
-            Uri server_url = new Uri(settings.Configuration.GetSection("ApiSettings").GetSection("Server_URL").Value);
-            this.credentials = new Credentials(client_id, client_secret, server_url);
+
+            if (config != null)
+                this.server_address = new Uri(config.GetSection("ApiSettings").GetSection("Server_URL").Value);
+            this.credentials = new Credentials(clientId, clientSecret);
         }
 
         [Fact]
         public void EstablishConnection()
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-            Connection connection = new Connection(credentials, cancellationTokenSource);
-            
+            Connection connection = new Connection(credentials, server_address, cancellationTokenSource);
+
             Assert.True(connection.Connected);
         }
         [Fact]
-        public async void Authenticate()
+        public void Authenticate()
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-            Connection connection = new Connection(credentials, cancellationTokenSource);
-            connection.StartReceiving();
+            Connection connection = new Connection(credentials, server_address, cancellationTokenSource);
 
             Assert.True(connection.Connected);
 
-            AuthenticationMessage authMessage = new AuthenticationMessage();
-            authMessage.client_id = credentials.ClientID;
-            authMessage.client_secret = credentials.ClientSecret;
-            authMessage.grant_type = GrantType.ClientCredentials;
-            Reciever myReciever = new Reciever();
-            connection.Subscribe(myReciever);
+            AuthenticationMessage authMessage = new AuthenticationMessage(credentials, GrantType.ClientCredentials);
+            Receiver myReceiver = new Receiver();
+            connection.Subscribe(myReceiver);
             connection.SendMessage(authMessage);
 
-            while (!myReciever.recieved)
-            {
-                
-            }
+            SpinWait.SpinUntil(() => myReceiver.Received);
 
-            var result = AuthenticationResponse.FromJson(myReciever.value);
+            var unused = IResponse<AuthenticationResponse>.FromJson(myReceiver.Value);
         }
 
-        private class Reciever : IObserver<string>
+        private class Receiver : IObserver<string>
         {
-            public string value;
-            public bool done;
-            public bool recieved;
-            public string error;
+            public string Value;
+            // ReSharper disable once NotAccessedField.Local
+            public bool Done;
+            public bool Received;
+            // ReSharper disable once NotAccessedField.Local
+            public string Error;
 
-            public Reciever()
+            public Receiver()
             {
-                value = "";
-                done = false;
-                error = "";
-                recieved = false;
+                Value = "";
+                Done = false;
+                Error = "";
+                Received = false;
             }
             public void OnCompleted()
             {
-                done = true;
+                Done = true;
             }
 
             public void OnError(Exception error)
             {
-                this.error = error.Message;
+                this.Error = error.Message;
             }
 
             public void OnNext(string value)
             {
-                this.value = value;
-                this.recieved = true;
+                this.Value = value;
+                this.Received = true;
             }
         }
     }

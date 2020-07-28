@@ -1,8 +1,11 @@
-﻿namespace Deribit.Core.Messages
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace Deribit.Core.Messages
 {
-    public class ResponseBase<T>
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
+    public class ResponseBase<T> 
     {
-        public int id { get; set; }
+        public string id { get; set; }
         public string jsonrpc { get; set; }
         public T result { get; set; }
     }

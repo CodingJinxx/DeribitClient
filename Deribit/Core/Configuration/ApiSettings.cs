@@ -1,12 +1,7 @@
-﻿using System.Runtime.InteropServices;
-using Microsoft.Extensions.Configuration;
-
-namespace Deribit.Core.Configuration
+﻿namespace Deribit.Core.Configuration
 {
-    public class ApiSettings
+    public static class ApiSettings
     {
-        public const string SectionName = nameof(ApiSettings);
-        public string JSON_RPC { get; set; }
-        public string Server_URL { get; set; }
+        public static string JsonRpc { get; set; } = "2.0";
     }
 }

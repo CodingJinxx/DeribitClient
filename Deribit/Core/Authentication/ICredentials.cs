@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Deribit.Core.Authentication
+﻿namespace Deribit.Core.Authentication
 {
     public interface ICredentials
     {
-        public string ClientID { get; set; }
+        public string ClientId { get; set; }
         public string ClientSecret { get; set; }
-        public Uri ServerURL { get; set; }
+        public string RefreshToken { get; set; }
+        public string Signature { get; set; }
     }
 }

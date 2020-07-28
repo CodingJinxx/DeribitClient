@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Deribit.Core.Types
+﻿namespace Deribit.Core.Types
 {
     public class GrantType
     {
