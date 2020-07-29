@@ -24,7 +24,7 @@ namespace Deribit.Core.Connection
         private ICredentials _credentials;
         private List<IObserver<string>> _observers;
         private CancellationTokenSource _tokenSource;
-        private Queue<IMessage> _messages;
+        private Queue<Tuple<Guid, IMessage>> _messages;
         private Uri _server_address;
 
         public Connection(ICredentials credentials, Uri serverAddress, CancellationTokenSource tokenSource)
@@ -34,7 +34,7 @@ namespace Deribit.Core.Connection
             this._tokenSource = tokenSource;
             this._webSocket = new ClientWebSocket();
             this._observers = new List<IObserver<string>>();
-            this._messages = new Queue<IMessage>();
+            this._messages = new Queue<Tuple<Guid, IMessage>>();
 
             _establishConnection().Wait();
 #pragma warning disable 4014
@@ -112,20 +112,26 @@ namespace Deribit.Core.Connection
                     return;
                 }
 
-                string rawMessage = _messages.Dequeue().GetJson();
+                var messageTuple = _messages.Dequeue();
+                string rawMessage = messageTuple.Item2.GetJson(messageTuple.Item1);
                 ArraySegment<byte> message = Encoding.UTF8.GetBytes(rawMessage);
                 Sending = true;
                 await _webSocket.SendAsync(message, WebSocketMessageType.Text, true, _tokenSource.Token);
             }
         }
 
-        public async void SendMessage(IMessage message)
+        public async Task<Guid> SendMessage(IMessage message)
         {
-            _messages.Enqueue(message);
+            Guid messageGuid = Guid.NewGuid();
+            _messages.Enqueue(new Tuple<Guid, IMessage>(messageGuid, message));
             if (!Sending)
             {
-                await _startSending();
+#pragma warning disable 4014
+                Task.Factory.StartNew(_startSending);
+#pragma warning restore 4014
             }
+
+            return messageGuid;
         }
     }
 }

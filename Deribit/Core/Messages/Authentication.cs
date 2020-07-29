@@ -10,6 +10,7 @@ namespace Deribit.Core.Messages
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     public class AuthenticationMessage : IMessage
     {
+        
         // Think about adding the state property
         public AuthenticationMessage(ICredentials credentials, string grantType)
         {
@@ -56,59 +57,72 @@ namespace Deribit.Core.Messages
 
         public string GetJson()
         {
-            if (!GrantType.Contains(grant_type))
-            {
-                throw new InvalidParameterException(this.GetType().Name, grant_type, nameof(grant_type));
-            }
-            if(grant_type == GrantType.ClientCredentials || grant_type == GrantType.ClientSignature)
-            {
-                if(client_id == null)
-                {
-                    throw new MissingParameterException(this.GetType().Name, nameof(client_id));
-                }
-            }
-            if(grant_type == GrantType.ClientCredentials)
-            {
-                if(client_secret == null)
-                {
-                    throw new MissingParameterException(this.GetType().Name, nameof(client_secret));
-                }
-            }
-            if(grant_type == GrantType.RefreshToken)
-            {
-                if(refresh_token == null)
-                {
-                    throw new MissingParameterException(this.GetType().Name, nameof(refresh_token));
-                }
-            }
-            if(grant_type == GrantType.ClientSignature)
-            {
-                if(signature == null)
-                {
-                    throw new MissingParameterException(this.GetType().Name , nameof(refresh_token));
-                }
-            }
-            if(grant_type != GrantType.ClientSignature)
-            {
-                if(nonce != null)
-                {
-                    throw new ExcessiveParameterException(this.GetType().Name, nameof(nonce));
-                }
-                if(data != null)
-                {
-                    throw new ExcessiveParameterException(this.GetType().Name, nameof(data));
-                }
-            }
+            return GetJson(Guid.Empty);
+        }
+
+        public string GetJson(Guid identifier)
+        {
+            CheckValidity(this);
 
             RequestBase<AuthenticationMessage> request = new RequestBase<AuthenticationMessage>();
-            request.id = "0";
             request.method = this.MethodName;
-            request.jsonrpc = "2.0";
             request.@params = this;
+
+            if (identifier != Guid.Empty)
+            {
+                request.id = identifier.ToString();
+            }
 
             JsonSerializerSettings settings = new JsonSerializerSettings();
             settings.NullValueHandling = NullValueHandling.Ignore;
             return JsonConvert.SerializeObject(request, settings);
+        }
+
+        public static void CheckValidity(AuthenticationMessage message)
+        {
+            if (!GrantType.Contains(message.grant_type))
+            {
+                throw new InvalidParameterException(message.GetType().Name, message.grant_type, nameof(grant_type));
+            }
+            if (message.grant_type == GrantType.ClientCredentials || message.grant_type == GrantType.ClientSignature)
+            {
+                if (message.client_id == null)
+                {
+                    throw new MissingParameterException(message.GetType().Name, nameof(client_id));
+                }
+            }
+            if (message.grant_type == GrantType.ClientCredentials)
+            {
+                if (message.client_secret == null)
+                {
+                    throw new MissingParameterException(message.GetType().Name, nameof(client_secret));
+                }
+            }
+            if (message.grant_type == GrantType.RefreshToken)
+            {
+                if (message.refresh_token == null)
+                {
+                    throw new MissingParameterException(message.GetType().Name, nameof(refresh_token));
+                }
+            }
+            if (message.grant_type == GrantType.ClientSignature)
+            {
+                if (message.signature == null)
+                {
+                    throw new MissingParameterException(message.GetType().Name, nameof(refresh_token));
+                }
+            }
+            if (message.grant_type != GrantType.ClientSignature)
+            {
+                if (message.nonce != null)
+                {
+                    throw new ExcessiveParameterException(message.GetType().Name, nameof(nonce));
+                }
+                if (message.data != null)
+                {
+                    throw new ExcessiveParameterException(message.GetType().Name, nameof(data));
+                }
+            }
         }
     }
 
