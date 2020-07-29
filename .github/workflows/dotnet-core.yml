@@ -25,4 +25,5 @@ jobs:
         CLIENT_ID: ${{secrets.CLIENT_ID}}
         CLIENT_SECRET: ${{secrets.CLIENT_SECRET}}
         SERVER_ADDRESS: "wss://test.deribit.com/ws/api/v2"
+        JSON_RPC: "2.0"  
       run: dotnet test --no-restore --verbosity normal
