@@ -32,6 +32,7 @@ namespace DeribitTests.Core
                 clientId = Environment.GetEnvironmentVariable("CLIENT_ID");
                 clientSecret = Environment.GetEnvironmentVariable("CLIENT_SECRET");
                 server_address = new Uri(Environment.GetEnvironmentVariable("SERVER_ADDRESS"));
+                ApiSettings.JsonRpc = Environment.GetEnvironmentVariable("JSON_RPC");
             }
             else
             {
