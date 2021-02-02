@@ -1,7 +1,12 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
+using System.Net.WebSockets;
+using System.Security.Cryptography;
 using System.Threading;
 using Deribit.Core.Authentication;
+using Deribit.Core.Configuration;
 using Deribit.Core.Messages;
 using Deribit.Core.Connection;
 using Deribit.Core.Types;
@@ -27,6 +32,7 @@ namespace DeribitTests.Core
                 clientId = Environment.GetEnvironmentVariable("CLIENT_ID");
                 clientSecret = Environment.GetEnvironmentVariable("CLIENT_SECRET");
                 server_address = new Uri(Environment.GetEnvironmentVariable("SERVER_ADDRESS"));
+                ApiSettings.JsonRpc = Environment.GetEnvironmentVariable("JSON_RPC");
             }
             else
             {
@@ -40,6 +46,7 @@ namespace DeribitTests.Core
 
                 clientId = config.GetSection("UserSettings").GetSection("Client_Id").Value;
                 clientSecret = config.GetSection("UserSettings").GetSection("Client_Secret").Value;
+                ApiSettings.JsonRpc = config.GetSection("ApiSettings").GetSection("JSON_RPC").Value;
             }
 
             if (config != null)
@@ -55,6 +62,7 @@ namespace DeribitTests.Core
 
             Assert.True(connection.Connected);
         }
+        
         [Fact]
         public void Authenticate()
         {
@@ -70,12 +78,35 @@ namespace DeribitTests.Core
 
             SpinWait.SpinUntil(() => myReceiver.Received);
 
-            var unused = IResponse<AuthenticationResponse>.FromJson(myReceiver.Value);
+            var unused = IResponse<AuthenticationResponse>.FromJson(myReceiver.Values.Dequeue());
+        }
+
+        [Fact]
+        public async void MessageDifferentiation()
+        {
+            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+            Connection connection = new Connection(credentials, server_address, cancellationTokenSource);
+
+            Assert.True(connection.Connected);
+
+            AuthenticationMessage authMessage = new AuthenticationMessage(credentials, GrantType.ClientCredentials);
+            Receiver myReceiver = new Receiver();
+            connection.Subscribe(myReceiver);
+
+            Guid id1 = await connection.SendMessage(authMessage);
+            Guid id2 = await connection.SendMessage(authMessage);
+
+            SpinWait.SpinUntil(() => myReceiver.Values.Count == 2);
+
+            var message1 = IResponse<AuthenticationResponse>.FromJson(myReceiver.Values.Dequeue());
+            var message2 = IResponse<AuthenticationResponse>.FromJson(myReceiver.Values.Dequeue());
+
+            Assert.True((message1.id == id1.ToString() || message1.id == id2.ToString()) && (message2.id == id1.ToString() || message2.id == id2.ToString()));
         }
 
         private class Receiver : IObserver<string>
         {
-            public string Value;
+            public Queue<string> Values;
             // ReSharper disable once NotAccessedField.Local
             public bool Done;
             public bool Received;
@@ -84,7 +115,7 @@ namespace DeribitTests.Core
 
             public Receiver()
             {
-                Value = "";
+                Values = new Queue<string>();
                 Done = false;
                 Error = "";
                 Received = false;
@@ -101,7 +132,7 @@ namespace DeribitTests.Core
 
             public void OnNext(string value)
             {
-                this.Value = value;
+                this.Values.Enqueue(value);
                 this.Received = true;
             }
         }

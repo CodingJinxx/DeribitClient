@@ -1,3 +1,7 @@
+**.nuget.cache
+**.assets.json
+**.cache
+
 ## API Login
 usersettings.json
 
@@ -153,6 +157,9 @@ coverage*.info
 # Visual Studio code coverage results
 *.coverage
 *.coveragexml
+
+# Rider
+.idea
 
 # NCrunch
 _NCrunch_*
