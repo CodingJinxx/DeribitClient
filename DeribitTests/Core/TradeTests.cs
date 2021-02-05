@@ -12,21 +12,23 @@ using Deribit.Core.Configuration;
 using Deribit.Core.Messages.Authentication;
 using Deribit.Core.Messages;
 using Deribit.Core.Connection;
+using Deribit.Core.Messages.Trading;
 using Deribit.Core.Types;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 using Xunit;
 using Xunit.Abstractions;
 
 
 namespace DeribitTests.Core
 {
-    public class ConnectionTests
+    public class TradeTests
     {
         private Credentials credentials;
         private Uri server_address;
         private readonly ITestOutputHelper output;
         
-        public ConnectionTests(ITestOutputHelper output)
+        public TradeTests(ITestOutputHelper output)
         {
             this.output = output;
             var isRunningInsideAction = Environment.GetEnvironmentVariable("CI") == "true";
@@ -61,63 +63,13 @@ namespace DeribitTests.Core
         }
 
         [Fact]
-        public void EstablishConnection()
+        public void Buy()
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
             Connection connection = new Connection(credentials, server_address, cancellationTokenSource);
-
+            
             Assert.True(connection.Connected);
-        }
-        
-        [Fact]
-        public void Authenticate()
-        {
-            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-            Connection connection = new Connection(credentials, server_address, cancellationTokenSource);
-
-            Assert.True(connection.Connected);
-
-            AuthMessage authMessage = new AuthMessage(credentials, GrantType.ClientCredentials);
-            Receiver myReceiver = new Receiver();
-            connection.Subscribe(myReceiver);
-            connection.SendMessage(authMessage);
-
-            SpinWait.SpinUntil(() => myReceiver.Received);
-
-            var unused = IResponse<AuthenticationResponse>.FromJson(myReceiver.Values.Dequeue());
-        }
-
-        [Fact]
-        public async void MessageDifferentiation()
-        {
-            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-            Connection connection = new Connection(credentials, server_address, cancellationTokenSource);
-
-            Assert.True(connection.Connected);
-
-            AuthMessage authMessage = new AuthMessage(credentials, GrantType.ClientCredentials);
-            Receiver myReceiver = new Receiver();
-            connection.Subscribe(myReceiver);
-
-            Guid id1 = await connection.SendMessage(authMessage);
-            Guid id2 = await connection.SendMessage(authMessage);
-
-            SpinWait.SpinUntil(() => myReceiver.Values.Count == 2);
-
-            var message1 = IResponse<AuthenticationResponse>.FromJson(myReceiver.Values.Dequeue());
-            var message2 = IResponse<AuthenticationResponse>.FromJson(myReceiver.Values.Dequeue());
-
-            Assert.True((message1.id == id1.ToString() || message1.id == id2.ToString()) && (message2.id == id1.ToString() || message2.id == id2.ToString()));
-        }
-
-        [Fact]
-        public async void Logout()
-        {
-            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-            Connection connection = new Connection(credentials, server_address, cancellationTokenSource);
-
-            Assert.True(connection.Connected);
-
+            
             AuthMessage authMessage = new AuthMessage(credentials, GrantType.ClientCredentials);
             Receiver myReceiver = new Receiver();
             connection.Subscribe(myReceiver);
@@ -125,13 +77,26 @@ namespace DeribitTests.Core
 
             SpinWait.SpinUntil(() => myReceiver.Values.Count > 0);
 
-            var authResponse = IResponse<AuthenticationResponse>.FromJson(myReceiver.Values.Dequeue());
-            
-            LogoutMessage logoutMessage = new LogoutMessage(authResponse.result.access_token);
-            connection.SendMessage(logoutMessage);
+            var AuthResponse = IResponse<AuthenticationResponse>.FromJson(myReceiver.Values.Dequeue());
+
+            BuyMessage buyMessage = new BuyMessage
+            {
+                
+                instrument_name = "BTC-PERPETUAL",
+                amount = 40.0f,
+                type = OrderType.Limit,
+                price = 35000.0f,
+                label = "market04022021"
+            };
+            connection.SendMessage(buyMessage);
             
             SpinWait.SpinUntil(() => myReceiver.Values.Count > 0);
-            var logoutResponse = IResponse<EmptyResponse>.FromJson(myReceiver.Values.Dequeue());
+
+            var buyResponse = IResponse<BuyResponse>.FromJson(myReceiver.Values.Dequeue());
+            
+            JsonSerializerSettings settings = new JsonSerializerSettings();
+            settings.NullValueHandling = NullValueHandling.Ignore;
+            output.WriteLine(JsonConvert.SerializeObject(buyResponse, settings));
         }
     }
 }

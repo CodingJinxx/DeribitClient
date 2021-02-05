@@ -7,7 +7,11 @@ namespace Deribit.Core.Messages
     public class ResponseBase<T> 
     {
         public string id { get; set; }
-        public string jsonrpc { get; set; } = ApiSettings.JsonRpc;
+        public string jsonrpc { get; set; }
         public T result { get; set; }
+        public long usIn { get; set; } 
+        public long usOut { get; set; } 
+        public int usDiff { get; set; } 
+        public bool testnet { get; set; } 
     }
 }

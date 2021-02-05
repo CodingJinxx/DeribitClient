@@ -2,17 +2,17 @@
 using System.Diagnostics.CodeAnalysis;
 using Deribit.Core.Authentication;
 using Deribit.Core.Types;
+using Deribit.Core.Messages.Exceptions;
 
 using Newtonsoft.Json;
 
-namespace Deribit.Core.Messages
+namespace Deribit.Core.Messages.Authentication
 {
-    [SuppressMessage("ReSharper", "InconsistentNaming")]
-    public class AuthenticationMessage : IMessage
+    public class AuthMessage : IMessage
     {
         
         // Think about adding the state property
-        public AuthenticationMessage(ICredentials credentials, string grantType)
+        public AuthMessage(ICredentials credentials, string grantType)
         {
             if (!GrantType.Contains(grantType))
             {
@@ -60,17 +60,17 @@ namespace Deribit.Core.Messages
             return GetJson(Guid.Empty);
         }
 
-        public string GetJson(Guid identifier)
+        public string GetJson(Guid id)
         {
             CheckValidity(this);
 
-            RequestBase<AuthenticationMessage> request = new RequestBase<AuthenticationMessage>();
-            request.method = this.MethodName;
+            RequestBase<AuthMessage> request = new RequestBase<AuthMessage>();
+            request.method = MethodName;
             request.@params = this;
 
-            if (identifier != Guid.Empty)
+            if (id != Guid.Empty)
             {
-                request.id = identifier.ToString();
+                request.id = id.ToString();
             }
 
             JsonSerializerSettings settings = new JsonSerializerSettings();
@@ -78,7 +78,7 @@ namespace Deribit.Core.Messages
             return JsonConvert.SerializeObject(request, settings);
         }
 
-        public static void CheckValidity(AuthenticationMessage message)
+        public static void CheckValidity(AuthMessage message)
         {
             if (!GrantType.Contains(message.grant_type))
             {
@@ -126,7 +126,6 @@ namespace Deribit.Core.Messages
         }
     }
 
-    [SuppressMessage("ReSharper", "InconsistentNaming")]
     public class AuthenticationResponse : IResponse<AuthenticationResponse>
     {
         public string access_token { get; set; }
@@ -134,7 +133,5 @@ namespace Deribit.Core.Messages
         public string scope { get; set; }
         public string state { get; set; }
         public string token_type { get; set; }
-
-
     }
 }
