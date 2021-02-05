@@ -1,4 +1,4 @@
-﻿namespace Deribit.Core.Authentication
+﻿﻿namespace Deribit.Core.Authentication
 {
     public class Credentials : ICredentials
     {

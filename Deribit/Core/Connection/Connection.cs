@@ -37,9 +37,7 @@ namespace Deribit.Core.Connection
             this._messages = new Queue<Tuple<Guid, IMessage>>();
 
             _establishConnection().Wait();
-#pragma warning disable 4014
             _startReceiving();
-#pragma warning restore 4014
         }
 
         public IDisposable Subscribe(IObserver<string> observer)
@@ -94,6 +92,7 @@ namespace Deribit.Core.Connection
                     }
                 }
                 string response = Encoding.UTF8.GetString(buffer);
+                buffer = new byte[INITIAL_BUFFERSIZE];
                 foreach(var observer in _observers)
                 {
                     observer.OnNext(response);

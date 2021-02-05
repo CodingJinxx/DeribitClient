@@ -1,28 +1,34 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net.WebSockets;
 using System.Security.Cryptography;
 using System.Threading;
+using Deribit.Core;
 using Deribit.Core.Authentication;
 using Deribit.Core.Configuration;
+using Deribit.Core.Messages.Authentication;
 using Deribit.Core.Messages;
 using Deribit.Core.Connection;
 using Deribit.Core.Types;
 using Microsoft.Extensions.Configuration;
 using Xunit;
+using Xunit.Abstractions;
 
 
-namespace DeribitTests.Core
+namespace DeribitTests.Integration
 {
     public class ConnectionTests
     {
         private Credentials credentials;
         private Uri server_address;
+        private readonly ITestOutputHelper output;
         
-        public ConnectionTests()
+        public ConnectionTests(ITestOutputHelper output)
         {
+            this.output = output;
             var isRunningInsideAction = Environment.GetEnvironmentVariable("CI") == "true";
 
             IConfigurationRoot config = null;
@@ -71,7 +77,7 @@ namespace DeribitTests.Core
 
             Assert.True(connection.Connected);
 
-            AuthenticationMessage authMessage = new AuthenticationMessage(credentials, GrantType.ClientCredentials);
+            AuthMessage authMessage = new AuthMessage(credentials, GrantType.ClientCredentials);
             Receiver myReceiver = new Receiver();
             connection.Subscribe(myReceiver);
             connection.SendMessage(authMessage);
@@ -89,7 +95,7 @@ namespace DeribitTests.Core
 
             Assert.True(connection.Connected);
 
-            AuthenticationMessage authMessage = new AuthenticationMessage(credentials, GrantType.ClientCredentials);
+            AuthMessage authMessage = new AuthMessage(credentials, GrantType.ClientCredentials);
             Receiver myReceiver = new Receiver();
             connection.Subscribe(myReceiver);
 
@@ -104,37 +110,28 @@ namespace DeribitTests.Core
             Assert.True((message1.id == id1.ToString() || message1.id == id2.ToString()) && (message2.id == id1.ToString() || message2.id == id2.ToString()));
         }
 
-        private class Receiver : IObserver<string>
+        [Fact]
+        public async void Logout()
         {
-            public Queue<string> Values;
-            // ReSharper disable once NotAccessedField.Local
-            public bool Done;
-            public bool Received;
-            // ReSharper disable once NotAccessedField.Local
-            public string Error;
+            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+            Connection connection = new Connection(credentials, server_address, cancellationTokenSource);
 
-            public Receiver()
-            {
-                Values = new Queue<string>();
-                Done = false;
-                Error = "";
-                Received = false;
-            }
-            public void OnCompleted()
-            {
-                Done = true;
-            }
+            Assert.True(connection.Connected);
 
-            public void OnError(Exception error)
-            {
-                this.Error = error.Message;
-            }
+            AuthMessage authMessage = new AuthMessage(credentials, GrantType.ClientCredentials);
+            Receiver myReceiver = new Receiver();
+            connection.Subscribe(myReceiver);
+            connection.SendMessage(authMessage);
 
-            public void OnNext(string value)
-            {
-                this.Values.Enqueue(value);
-                this.Received = true;
-            }
+            SpinWait.SpinUntil(() => myReceiver.Values.Count > 0);
+
+            var authResponse = IResponse<AuthenticationResponse>.FromJson(myReceiver.Values.Dequeue());
+            
+            LogoutMessage logoutMessage = new LogoutMessage(authResponse.result.access_token);
+            connection.SendMessage(logoutMessage);
+            
+            SpinWait.SpinUntil(() => myReceiver.Values.Count > 0);
+            var logoutResponse = IResponse<EmptyResponse>.FromJson(myReceiver.Values.Dequeue());
         }
     }
 }
