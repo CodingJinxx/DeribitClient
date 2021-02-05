@@ -18,7 +18,7 @@ using Xunit;
 using Xunit.Abstractions;
 
 
-namespace DeribitTests.Core
+namespace DeribitTests.Integration
 {
     public class ConnectionTests
     {

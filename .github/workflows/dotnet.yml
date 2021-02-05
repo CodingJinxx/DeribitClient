@@ -26,4 +26,4 @@ jobs:
         CLIENT_SECRET: ${{secrets.CLIENT_SECRET}}
         SERVER_ADDRESS: "wss://test.deribit.com/ws/api/v2"
         JSON_RPC: "2.0"  
-      run: dotnet test --no-build --verbosity normal
+      run: dotnet test --no-build --verbosity normal --filter "FullyQualifiedName\!~Integration"
