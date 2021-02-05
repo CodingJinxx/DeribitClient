@@ -18,6 +18,7 @@ using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Xunit;
 using Xunit.Abstractions;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 
 namespace DeribitTests.Integration
@@ -96,7 +97,146 @@ namespace DeribitTests.Integration
             
             JsonSerializerSettings settings = new JsonSerializerSettings();
             settings.NullValueHandling = NullValueHandling.Ignore;
+            settings.Formatting = Formatting.Indented;
             output.WriteLine(JsonConvert.SerializeObject(buyResponse, settings));
+        }
+
+        [Fact]
+        public void Sell()
+        {
+            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+            Connection connection = new Connection(credentials, server_address, cancellationTokenSource);
+            
+            Assert.True(connection.Connected);
+            
+            AuthMessage authMessage = new AuthMessage(credentials, GrantType.ClientCredentials);
+            Receiver myReceiver = new Receiver();
+            connection.Subscribe(myReceiver);
+            connection.SendMessage(authMessage);
+
+            SpinWait.SpinUntil(() => myReceiver.Values.Count > 0);
+
+            var AuthResponse = IResponse<AuthenticationResponse>.FromJson(myReceiver.Values.Dequeue());
+
+            SellMessage sellMessage = new SellMessage
+            {
+                instrument_name = "BTC-PERPETUAL",
+                amount = 40.0f,
+                type = OrderType.Limit,
+                price = 35000.0f,
+                label = "market04022021"
+            };
+            connection.SendMessage(sellMessage);
+
+            SpinWait.SpinUntil(() => myReceiver.Values.Count > 0);
+
+            var sellResponse = IResponse<SellResponse>.FromJson(myReceiver.Values.Dequeue());
+
+            JsonSerializerSettings settings = new JsonSerializerSettings();
+            settings.NullValueHandling = NullValueHandling.Ignore;
+            settings.Formatting = Formatting.Indented;
+            output.WriteLine(JsonConvert.SerializeObject(sellResponse, settings));
+        }
+
+        [Fact]
+        public void Edit()
+        {
+            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+            Connection connection = new Connection(credentials, server_address, cancellationTokenSource);
+            
+            Assert.True(connection.Connected);
+            
+            AuthMessage authMessage = new AuthMessage(credentials, GrantType.ClientCredentials);
+            Receiver myReceiver = new Receiver();
+            connection.Subscribe(myReceiver);
+            connection.SendMessage(authMessage);
+
+            SpinWait.SpinUntil(() => myReceiver.Values.Count > 0);
+
+            var AuthResponse = IResponse<AuthenticationResponse>.FromJson(myReceiver.Values.Dequeue());
+
+            BuyMessage buyMessage = new BuyMessage
+            {
+                instrument_name = "BTC-PERPETUAL",
+                amount = 30.0f,
+                type = OrderType.Limit,
+                price = 35000.0f,
+                label = "market04022021"
+            };
+            connection.SendMessage(buyMessage);
+            
+            SpinWait.SpinUntil(() => myReceiver.Values.Count > 0);
+
+            var buyResponse = IResponse<BuyResponse>.FromJson(myReceiver.Values.Dequeue());
+            
+            JsonSerializerSettings settings = new JsonSerializerSettings();
+            settings.NullValueHandling = NullValueHandling.Ignore;
+            settings.Formatting = Formatting.Indented;
+            output.WriteLine(JsonConvert.SerializeObject(buyResponse, settings));
+
+            EditMessage editMessage = new EditMessage
+            {
+                order_id = buyResponse.result.order.order_id,
+                amount = 10.0f,
+            };
+
+            connection.SendMessage(editMessage);
+
+            SpinWait.SpinUntil(() => myReceiver.Values.Count > 0);
+
+            var editResponse = IResponse<EditResponse>.FromJson(myReceiver.Values.Dequeue());
+            output.WriteLine(JsonConvert.SerializeObject(editResponse, settings));
+        }
+
+        [Fact]
+        public void Cancel()
+        {
+            
+            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+            Connection connection = new Connection(credentials, server_address, cancellationTokenSource);
+            
+            Assert.True(connection.Connected);
+            
+            AuthMessage authMessage = new AuthMessage(credentials, GrantType.ClientCredentials);
+            Receiver myReceiver = new Receiver();
+            connection.Subscribe(myReceiver);
+            connection.SendMessage(authMessage);
+
+            SpinWait.SpinUntil(() => myReceiver.Values.Count > 0);
+
+            var AuthResponse = IResponse<AuthenticationResponse>.FromJson(myReceiver.Values.Dequeue());
+
+            BuyMessage buyMessage = new BuyMessage
+            {
+                
+                instrument_name = "BTC-PERPETUAL",
+                amount = 40.0f,
+                type = OrderType.Limit,
+                price = 35000.0f,
+                label = "market04022021"
+            };
+            connection.SendMessage(buyMessage);
+            
+            SpinWait.SpinUntil(() => myReceiver.Values.Count > 0);
+
+            var buyResponse = IResponse<BuyResponse>.FromJson(myReceiver.Values.Dequeue());
+            
+            JsonSerializerSettings settings = new JsonSerializerSettings();
+            settings.NullValueHandling = NullValueHandling.Ignore;
+            settings.Formatting = Formatting.Indented;
+            output.WriteLine(JsonConvert.SerializeObject(buyResponse, settings));
+
+            var cancelRequest = new CancelMessage
+            {
+                order_id = buyResponse.result.order.order_id
+            };
+
+            connection.SendMessage(cancelRequest);
+
+            SpinWait.SpinUntil(() => myReceiver.Values.Count > 0);
+
+            var cancelResponse = IResponse<CancelResponse>.FromJson(myReceiver.Values.Dequeue());
+            output.WriteLine(JsonConvert.SerializeObject(cancelResponse, settings));
         }
     }
 }

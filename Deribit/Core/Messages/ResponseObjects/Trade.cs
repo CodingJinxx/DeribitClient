@@ -1,6 +1,6 @@
 ﻿namespace Deribit.Core.Messages.ResponseObjects
 {
-    public class Trades
+    public class Trade
     {
         public float amount { get; set; }
         public string block_trade_id { get; set; }
@@ -24,7 +24,7 @@
         public bool self_trade { get; set; }
         public string state { get; set; }
         public int tick_direction { get; set; }
-        public int timestamp { get; set; }
+        public long timestamp { get; set; }
         public string trade_id { get; set; }
         public int trade_seq { get; set; }
         public float underlying_price { get; set; }

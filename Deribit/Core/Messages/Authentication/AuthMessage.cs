@@ -53,74 +53,49 @@ namespace Deribit.Core.Messages.Authentication
         public string state { get; set; }
         public string scope { get; set; }
 
-
-
-        public string GetJson()
+        public void CheckValidity()
         {
-            return GetJson(Guid.Empty);
-        }
-
-        public string GetJson(Guid id)
-        {
-            CheckValidity(this);
-
-            RequestBase<AuthMessage> request = new RequestBase<AuthMessage>();
-            request.method = MethodName;
-            request.@params = this;
-
-            if (id != Guid.Empty)
+            if (!GrantType.Contains(this.grant_type))
             {
-                request.id = id.ToString();
+                throw new InvalidParameterException(this.GetType().Name, this.grant_type, nameof(grant_type));
             }
-
-            JsonSerializerSettings settings = new JsonSerializerSettings();
-            settings.NullValueHandling = NullValueHandling.Ignore;
-            return JsonConvert.SerializeObject(request, settings);
-        }
-
-        public static void CheckValidity(AuthMessage message)
-        {
-            if (!GrantType.Contains(message.grant_type))
+            if (this.grant_type == GrantType.ClientCredentials || this.grant_type == GrantType.ClientSignature)
             {
-                throw new InvalidParameterException(message.GetType().Name, message.grant_type, nameof(grant_type));
-            }
-            if (message.grant_type == GrantType.ClientCredentials || message.grant_type == GrantType.ClientSignature)
-            {
-                if (message.client_id == null)
+                if (this.client_id == null)
                 {
-                    throw new MissingParameterException(message.GetType().Name, nameof(client_id));
+                    throw new MissingParameterException(this.GetType().Name, nameof(client_id));
                 }
             }
-            if (message.grant_type == GrantType.ClientCredentials)
+            if (this.grant_type == GrantType.ClientCredentials)
             {
-                if (message.client_secret == null)
+                if (this.client_secret == null)
                 {
-                    throw new MissingParameterException(message.GetType().Name, nameof(client_secret));
+                    throw new MissingParameterException(this.GetType().Name, nameof(client_secret));
                 }
             }
-            if (message.grant_type == GrantType.RefreshToken)
+            if (this.grant_type == GrantType.RefreshToken)
             {
-                if (message.refresh_token == null)
+                if (this.refresh_token == null)
                 {
-                    throw new MissingParameterException(message.GetType().Name, nameof(refresh_token));
+                    throw new MissingParameterException(this.GetType().Name, nameof(refresh_token));
                 }
             }
-            if (message.grant_type == GrantType.ClientSignature)
+            if (this.grant_type == GrantType.ClientSignature)
             {
-                if (message.signature == null)
+                if (this.signature == null)
                 {
-                    throw new MissingParameterException(message.GetType().Name, nameof(refresh_token));
+                    throw new MissingParameterException(this.GetType().Name, nameof(refresh_token));
                 }
             }
-            if (message.grant_type != GrantType.ClientSignature)
+            if (this.grant_type != GrantType.ClientSignature)
             {
-                if (message.nonce != null)
+                if (this.nonce != null)
                 {
-                    throw new ExcessiveParameterException(message.GetType().Name, nameof(nonce));
+                    throw new ExcessiveParameterException(this.GetType().Name, nameof(nonce));
                 }
-                if (message.data != null)
+                if (this.data != null)
                 {
-                    throw new ExcessiveParameterException(message.GetType().Name, nameof(data));
+                    throw new ExcessiveParameterException(this.GetType().Name, nameof(data));
                 }
             }
         }
