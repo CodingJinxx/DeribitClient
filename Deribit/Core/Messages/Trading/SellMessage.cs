@@ -1,14 +1,14 @@
 ﻿using System;
-using Deribit.Core.Messages.Exceptions;
+using System.Buffers;
 using Deribit.Core.Messages.ResponseObjects;
 using Newtonsoft.Json;
 
 namespace Deribit.Core.Messages.Trading
 {
-    public class BuyMessage : IMessage
+    public class SellMessage : IMessage
     {
-        [System.Text.Json.Serialization.JsonIgnore]
-        public string MethodName { get => "/private/buy"; }
+        [JsonIgnore]
+        public string MethodName { get => "/private/sell"; }
         public string instrument_name { get; set; }
         public float amount { get; set; }
         public string type { get; set; }
@@ -24,17 +24,13 @@ namespace Deribit.Core.Messages.Trading
         public string advanced { get; set; }
         public bool mmp { get; set; }
 
-        public BuyMessage()
-        {
-        }
-
         public void CheckValidity()
         {
             // TODO Implement Check Validity 
         }
     }
 
-    public class BuyResponse : IResponse<BuyResponse>
+    public class SellResponse : IResponse<SellResponse>
     {
         public Order order { get; set; }
         public Trade[] trades { get; set; }

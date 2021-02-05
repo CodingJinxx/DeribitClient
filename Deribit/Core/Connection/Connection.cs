@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Net.WebSockets;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-
+using System.Xml.Schema;
 using Deribit.Core.Authentication;
 using Deribit.Core.Messages;
 
@@ -24,7 +25,7 @@ namespace Deribit.Core.Connection
         private ICredentials _credentials;
         private List<IObserver<string>> _observers;
         private CancellationTokenSource _tokenSource;
-        private Queue<Tuple<Guid, IMessage>> _messages;
+        private Queue<Tuple<Guid, IMessage>> _messages; // The Object is IMessage
         private Uri _server_address;
 
         public Connection(ICredentials credentials, Uri serverAddress, CancellationTokenSource tokenSource)
@@ -112,7 +113,7 @@ namespace Deribit.Core.Connection
                 }
 
                 var messageTuple = _messages.Dequeue();
-                string rawMessage = messageTuple.Item2.GetJson(messageTuple.Item1);
+                string rawMessage = IMessage.GetJson(messageTuple.Item1, messageTuple.Item2);
                 ArraySegment<byte> message = Encoding.UTF8.GetBytes(rawMessage);
                 Sending = true;
                 await _webSocket.SendAsync(message, WebSocketMessageType.Text, true, _tokenSource.Token);
