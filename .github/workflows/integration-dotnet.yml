@@ -5,7 +5,7 @@ on:
 
 jobs:
   build-and-run-integration-tests:
-
+    timeout-minutes: 20
     runs-on: ubuntu-latest
 
     steps:
