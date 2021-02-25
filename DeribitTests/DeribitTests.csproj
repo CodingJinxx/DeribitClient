@@ -1,12 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp5.0</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <ApplicationIcon />
     <OutputType>Library</OutputType>
     <StartupObject />
     <LangVersion>9</LangVersion>
     <Nullable>enable</Nullable>
+    <Authors>CodingJinxx</Authors>
   </PropertyGroup>
 
   <ItemGroup>
