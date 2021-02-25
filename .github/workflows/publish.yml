@@ -18,7 +18,7 @@ jobs:
       - name: Build
         run: dotnet build --no-restore
       - name: Pack
-        run: dotnet pack DeribitClient
+        run: dotnet pack Deribit
       - name: Publish
         id: publish_nuget
         uses: rohith/publish-nuget@v2
