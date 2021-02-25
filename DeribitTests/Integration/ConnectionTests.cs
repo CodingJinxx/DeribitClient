@@ -18,46 +18,13 @@ using Xunit;
 using Xunit.Abstractions;
 
 
-namespace DeribitTests.Integration
+namespace DeribitTests.Integration 
 {
-    public class ConnectionTests
+    public class ConnectionTests : BaseTests
     {
-        private Credentials credentials;
-        private Uri server_address;
-        private readonly ITestOutputHelper output;
-        
-        public ConnectionTests(ITestOutputHelper output)
+        public ConnectionTests(ITestOutputHelper output) : base(output)
         {
-            this.output = output;
-            var isRunningInsideAction = Environment.GetEnvironmentVariable("CI") == "true";
-
-            IConfigurationRoot config = null;
-            string clientId, clientSecret;
-            if (isRunningInsideAction)
-            {
-                clientId = Environment.GetEnvironmentVariable("CLIENT_ID");
-                clientSecret = Environment.GetEnvironmentVariable("CLIENT_SECRET");
-                server_address = new Uri(Environment.GetEnvironmentVariable("SERVER_ADDRESS"));
-                ApiSettings.JsonRpc = Environment.GetEnvironmentVariable("JSON_RPC");
-            }
-            else
-            {
-                string basePath = Directory.GetCurrentDirectory();
-                IConfigurationBuilder builder = new ConfigurationBuilder()
-                    .SetBasePath(basePath)
-                    .AddJsonFile("testsettings.json", false)
-                    .AddJsonFile("usersettings.json", false);
-
-                config = builder.Build();
-
-                clientId = config.GetSection("UserSettings").GetSection("Client_Id").Value;
-                clientSecret = config.GetSection("UserSettings").GetSection("Client_Secret").Value;
-                ApiSettings.JsonRpc = config.GetSection("ApiSettings").GetSection("JSON_RPC").Value;
-            }
-
-            if (config != null)
-                this.server_address = new Uri(config.GetSection("ApiSettings").GetSection("Server_URL").Value);
-            this.credentials = new Credentials(clientId, clientSecret);
+          
         }
 
         [Fact]

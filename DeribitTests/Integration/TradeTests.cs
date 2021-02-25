@@ -23,44 +23,10 @@ using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace DeribitTests.Integration
 {
-    public class TradeTests
+    public class TradeTests : BaseTests
     {
-        private Credentials credentials;
-        private Uri server_address;
-        private readonly ITestOutputHelper output;
-        
-        public TradeTests(ITestOutputHelper output)
+        public TradeTests(ITestOutputHelper output) : base(output)
         {
-            this.output = output;
-            var isRunningInsideAction = Environment.GetEnvironmentVariable("CI") == "true";
-
-            IConfigurationRoot config = null;
-            string clientId, clientSecret;
-            if (isRunningInsideAction)
-            {
-                clientId = Environment.GetEnvironmentVariable("CLIENT_ID");
-                clientSecret = Environment.GetEnvironmentVariable("CLIENT_SECRET");
-                server_address = new Uri(Environment.GetEnvironmentVariable("SERVER_ADDRESS"));
-                ApiSettings.JsonRpc = Environment.GetEnvironmentVariable("JSON_RPC");
-            }
-            else
-            {
-                string basePath = Directory.GetCurrentDirectory();
-                IConfigurationBuilder builder = new ConfigurationBuilder()
-                    .SetBasePath(basePath)
-                    .AddJsonFile("testsettings.json", false)
-                    .AddJsonFile("usersettings.json", false);
-
-                config = builder.Build();
-
-                clientId = config.GetSection("UserSettings").GetSection("Client_Id").Value;
-                clientSecret = config.GetSection("UserSettings").GetSection("Client_Secret").Value;
-                ApiSettings.JsonRpc = config.GetSection("ApiSettings").GetSection("JSON_RPC").Value;
-            }
-
-            if (config != null)
-                this.server_address = new Uri(config.GetSection("ApiSettings").GetSection("Server_URL").Value);
-            this.credentials = new Credentials(clientId, clientSecret);
         }
 
         [Fact]
@@ -68,9 +34,9 @@ namespace DeribitTests.Integration
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
             Connection connection = new Connection(credentials, server_address, cancellationTokenSource);
-            
+
             Assert.True(connection.Connected);
-            
+
             AuthMessage authMessage = new AuthMessage(credentials, GrantType.ClientCredentials);
             Receiver myReceiver = new Receiver();
             connection.Subscribe(myReceiver);
@@ -82,7 +48,6 @@ namespace DeribitTests.Integration
 
             BuyMessage buyMessage = new BuyMessage
             {
-                
                 instrument_name = "BTC-PERPETUAL",
                 amount = 40.0f,
                 type = OrderType.Limit,
@@ -90,11 +55,11 @@ namespace DeribitTests.Integration
                 label = "market04022021"
             };
             connection.SendMessage(buyMessage);
-            
+
             SpinWait.SpinUntil(() => myReceiver.Values.Count > 0);
 
             var buyResponse = IResponse<BuyResponse>.FromJson(myReceiver.Values.Dequeue());
-            
+
             JsonSerializerSettings settings = new JsonSerializerSettings();
             settings.NullValueHandling = NullValueHandling.Ignore;
             settings.Formatting = Formatting.Indented;
@@ -106,9 +71,9 @@ namespace DeribitTests.Integration
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
             Connection connection = new Connection(credentials, server_address, cancellationTokenSource);
-            
+
             Assert.True(connection.Connected);
-            
+
             AuthMessage authMessage = new AuthMessage(credentials, GrantType.ClientCredentials);
             Receiver myReceiver = new Receiver();
             connection.Subscribe(myReceiver);
@@ -143,9 +108,9 @@ namespace DeribitTests.Integration
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
             Connection connection = new Connection(credentials, server_address, cancellationTokenSource);
-            
+
             Assert.True(connection.Connected);
-            
+
             AuthMessage authMessage = new AuthMessage(credentials, GrantType.ClientCredentials);
             Receiver myReceiver = new Receiver();
             connection.Subscribe(myReceiver);
@@ -164,11 +129,11 @@ namespace DeribitTests.Integration
                 label = "market04022021"
             };
             connection.SendMessage(buyMessage);
-            
+
             SpinWait.SpinUntil(() => myReceiver.Values.Count > 0);
 
             var buyResponse = IResponse<BuyResponse>.FromJson(myReceiver.Values.Dequeue());
-            
+
             JsonSerializerSettings settings = new JsonSerializerSettings();
             settings.NullValueHandling = NullValueHandling.Ignore;
             settings.Formatting = Formatting.Indented;
@@ -191,12 +156,11 @@ namespace DeribitTests.Integration
         [Fact]
         public void Cancel()
         {
-            
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
             Connection connection = new Connection(credentials, server_address, cancellationTokenSource);
-            
+
             Assert.True(connection.Connected);
-            
+
             AuthMessage authMessage = new AuthMessage(credentials, GrantType.ClientCredentials);
             Receiver myReceiver = new Receiver();
             connection.Subscribe(myReceiver);
@@ -208,7 +172,6 @@ namespace DeribitTests.Integration
 
             BuyMessage buyMessage = new BuyMessage
             {
-                
                 instrument_name = "BTC-PERPETUAL",
                 amount = 40.0f,
                 type = OrderType.Limit,
@@ -216,11 +179,11 @@ namespace DeribitTests.Integration
                 label = "market04022021"
             };
             connection.SendMessage(buyMessage);
-            
+
             SpinWait.SpinUntil(() => myReceiver.Values.Count > 0);
 
             var buyResponse = IResponse<BuyResponse>.FromJson(myReceiver.Values.Dequeue());
-            
+
             JsonSerializerSettings settings = new JsonSerializerSettings();
             settings.NullValueHandling = NullValueHandling.Ignore;
             settings.Formatting = Formatting.Indented;
