@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Xml.Schema;
 using Deribit.Core.Authentication;
 using Deribit.Core.Messages;
+using Deribit.Core.Validator;
 
 namespace Deribit.Core.Connection
 {
@@ -15,7 +16,6 @@ namespace Deribit.Core.Connection
     {
         private const int INITIAL_BUFFERSIZE = 1024;
         private const int BUFFERSIZE_INCREMENT = 1024;
-
         public bool Connected { get; private set; }
         public bool Sending { get; private set; }
         public bool Receiving { get; private set; }
@@ -27,8 +27,9 @@ namespace Deribit.Core.Connection
         private CancellationTokenSource _tokenSource;
         private Queue<Tuple<Guid, IMessage>> _messages; 
         private Uri _server_address;
+        private IServerErrorHandler _errorHandler;
 
-        public Connection(ICredentials credentials, Uri serverAddress, CancellationTokenSource tokenSource)
+        public Connection(ICredentials credentials, Uri serverAddress, IServerErrorHandler handler, CancellationTokenSource tokenSource)
         {
             this._credentials = credentials;
             this._server_address = serverAddress;
@@ -36,11 +37,17 @@ namespace Deribit.Core.Connection
             this._webSocket = new ClientWebSocket();
             this._observers = new List<IObserver<string>>();
             this._messages = new Queue<Tuple<Guid, IMessage>>();
+            this._errorHandler = handler;
 
             _establishConnection().Wait();
             _startReceiving();
         }
 
+        public Connection(ICredentials credentials, Uri serverAddress, CancellationTokenSource tokenSource) : this(
+            credentials, serverAddress, new ServerErrorHandler(), tokenSource)
+        {
+            
+        }
         public IDisposable Subscribe(IObserver<string> observer)
         {
             if (!_observers.Contains(observer))
@@ -93,11 +100,22 @@ namespace Deribit.Core.Connection
                     }
                 }
                 string response = Encoding.UTF8.GetString(buffer);
-                buffer = new byte[INITIAL_BUFFERSIZE];
-                foreach(var observer in _observers)
+                var error = _errorHandler.ValidateJson(response);
+                if (error is not null)
                 {
-                    observer.OnNext(response);
+                    foreach (var observer in _observers)
+                    {
+                        observer.OnError(error);
+                    }
                 }
+                else
+                {
+                    foreach(var observer in _observers)
+                    {
+                        observer.OnNext(response);
+                    }
+                }
+                buffer = new byte[INITIAL_BUFFERSIZE];
             }
             Receiving = false;
         }
