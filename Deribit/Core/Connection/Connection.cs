@@ -25,7 +25,7 @@ namespace Deribit.Core.Connection
         private ICredentials _credentials;
         private List<IObserver<string>> _observers;
         private CancellationTokenSource _tokenSource;
-        private Queue<Tuple<Guid, IMessage>> _messages; // The Object is IMessage
+        private Queue<Tuple<Guid, IMessage>> _messages; 
         private Uri _server_address;
 
         public Connection(ICredentials credentials, Uri serverAddress, CancellationTokenSource tokenSource)
