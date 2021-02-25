@@ -23,9 +23,9 @@ using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace DeribitTests.Integration
 {
-    public class TradeTests : BaseTests
+    public class TradeConnectionTest : BaseConnectionTest
     {
-        public TradeTests(ITestOutputHelper output) : base(output)
+        public TradeConnectionTest(ITestOutputHelper output) : base(output)
         {
         }
 

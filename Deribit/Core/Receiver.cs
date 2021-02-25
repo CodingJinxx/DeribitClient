@@ -8,6 +8,7 @@ namespace Deribit.Core
         public Queue<string> Values;
         public bool Done;
         public bool Received;
+        public bool ErrorOcurred;
         public string Error;
 
         public Receiver()
@@ -15,6 +16,7 @@ namespace Deribit.Core
             Values = new Queue<string>();
             Done = false;
             Error = "";
+            ErrorOcurred = false;
             Received = false;
         }
         public void OnCompleted()
@@ -25,6 +27,7 @@ namespace Deribit.Core
         public void OnError(Exception error)
         {
             this.Error = error.Message;
+            this.ErrorOcurred = true;
         }
 
         public void OnNext(string value)

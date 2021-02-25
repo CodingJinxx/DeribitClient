@@ -20,9 +20,9 @@ using Xunit.Abstractions;
 
 namespace DeribitTests.Integration 
 {
-    public class ConnectionTests : BaseTests
+    public class ConnectionConnectionTest : BaseConnectionTest
     {
-        public ConnectionTests(ITestOutputHelper output) : base(output)
+        public ConnectionConnectionTest(ITestOutputHelper output) : base(output)
         {
           
         }

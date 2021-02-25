@@ -10,9 +10,9 @@ using Xunit.Abstractions;
 
 namespace DeribitTests.Integration
 {
-    public class MarketDataTests : BaseTests
+    public class MarketDataConnectionTest : BaseConnectionTest
     {
-        public MarketDataTests(ITestOutputHelper output) : base(output)
+        public MarketDataConnectionTest(ITestOutputHelper output) : base(output)
         {
             
         }
@@ -36,6 +36,7 @@ namespace DeribitTests.Integration
             SpinWait.SpinUntil(() => receiver.Received == true);
 
             var response = IResponse<BookSummaryByCurrencyResponse[]>.FromJson(receiver.Values.Dequeue());
+            Assert.True(response.result[0].ask_price != null);
             JsonSerializerSettings settings = new JsonSerializerSettings();
             settings.NullValueHandling = NullValueHandling.Ignore;
             settings.Formatting = Formatting.Indented;

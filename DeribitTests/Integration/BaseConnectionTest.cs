@@ -7,13 +7,13 @@ using Xunit.Abstractions;
 
 namespace DeribitTests.Integration
 {
-    public class BaseTests
+    public class BaseConnectionTest
     {
         protected Credentials credentials;
         protected Uri server_address;
         protected readonly ITestOutputHelper output;
         
-        public BaseTests(ITestOutputHelper output)
+        public BaseConnectionTest(ITestOutputHelper output)
         {
             this.output = output;
             var isRunningInsideAction = Environment.GetEnvironmentVariable("CI") == "true";
