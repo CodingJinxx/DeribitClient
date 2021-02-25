@@ -4,6 +4,9 @@
     <TargetFramework>netcoreapp5.0</TargetFramework>
     <LangVersion>9</LangVersion>
     <Nullable>enable</Nullable>
+    <PackageId>DeribitClient</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>CodingJinxx</Authors>
   </PropertyGroup>
 
   <ItemGroup>
