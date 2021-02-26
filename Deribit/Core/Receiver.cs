@@ -10,6 +10,7 @@ namespace Deribit.Core
         public bool Received;
         public bool ErrorOcurred;
         public string Error;
+        public readonly Guid Id;
 
         public Receiver()
         {
@@ -18,6 +19,7 @@ namespace Deribit.Core
             Error = "";
             ErrorOcurred = false;
             Received = false;
+            Id = Guid.NewGuid();
         }
         public void OnCompleted()
         {
@@ -28,6 +30,7 @@ namespace Deribit.Core
         {
             this.Error = error.Message;
             this.ErrorOcurred = true;
+            throw error;
         }
 
         public void OnNext(string value)

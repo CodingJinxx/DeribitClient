@@ -9,6 +9,8 @@ using System.Xml.Schema;
 using Deribit.Core.Authentication;
 using Deribit.Core.Messages;
 using Deribit.Core.Validator;
+using Newtonsoft.Json;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Deribit.Core.Connection
 {
@@ -16,25 +18,26 @@ namespace Deribit.Core.Connection
     {
         private const int INITIAL_BUFFERSIZE = 1024;
         private const int BUFFERSIZE_INCREMENT = 1024;
-        public bool Connected { get; private set; }
+        public bool Connected { get => _webSocket.State == WebSocketState.Open; }
         public bool Sending { get; private set; }
         public bool Receiving { get; private set; }
 
         private ClientWebSocket _webSocket;
-        // ReSharper disable once NotAccessedField.Local
         private ICredentials _credentials;
+        private Dictionary<Guid, IObserver<string>> _identifiedObservers;
         private List<IObserver<string>> _observers;
         private CancellationTokenSource _tokenSource;
         private Queue<Tuple<Guid, IMessage>> _messages; 
         private Uri _server_address;
         private IServerErrorHandler _errorHandler;
 
-        public Connection(ICredentials credentials, Uri serverAddress, IServerErrorHandler handler, CancellationTokenSource tokenSource)
+        public Connection(ICredentials credentials, Uri serverAddress, CancellationTokenSource tokenSource, IServerErrorHandler handler)
         {
             this._credentials = credentials;
             this._server_address = serverAddress;
             this._tokenSource = tokenSource;
             this._webSocket = new ClientWebSocket();
+            this._identifiedObservers = new Dictionary<Guid, IObserver<string>>();
             this._observers = new List<IObserver<string>>();
             this._messages = new Queue<Tuple<Guid, IMessage>>();
             this._errorHandler = handler;
@@ -44,18 +47,31 @@ namespace Deribit.Core.Connection
         }
 
         public Connection(ICredentials credentials, Uri serverAddress, CancellationTokenSource tokenSource) : this(
-            credentials, serverAddress, new ServerErrorHandler(), tokenSource)
+            credentials, serverAddress, tokenSource, new ServerErrorHandler())
         {
             
         }
+        public IDisposable Subscribe(IObserver<string> observer, Guid observerId)
+        {
+            if (observerId == Guid.Empty)
+            {
+                if (!_observers.Contains(observer))
+                {
+                    _observers.Add(observer);
+                    return new Unsubscriber<string, List<IObserver<string>>>(_observers, observer, observerId);
+                }
+            }
+            else if(!_identifiedObservers.ContainsKey(observerId) && !_identifiedObservers.ContainsValue(observer))
+            {
+                _identifiedObservers.TryAdd(observerId, observer);
+                return new Unsubscriber<string, Dictionary<Guid, IObserver<string>>>(_identifiedObservers, observer, observerId);
+            }
+            throw new Exception("Could not add Observer");
+        }
+
         public IDisposable Subscribe(IObserver<string> observer)
         {
-            if (!_observers.Contains(observer))
-            {
-                _observers.Add(observer);
-            }
-
-            return new Unsubscriber<string>(_observers, observer);
+            return Subscribe(observer, Guid.Empty);
         }
 
         private async Task _establishConnection()
@@ -66,8 +82,6 @@ namespace Deribit.Core.Connection
             {
                 throw new ConnectionFailedException(_server_address, _webSocket.State);
             }
-
-            Connected = true;
         }
 
         private async Task _startReceiving()
@@ -100,19 +114,37 @@ namespace Deribit.Core.Connection
                     }
                 }
                 string response = Encoding.UTF8.GetString(buffer);
+                var id = _extractId(response);
                 var error = _errorHandler.ValidateJson(response);
                 if (error is not null)
                 {
-                    foreach (var observer in _observers)
+                    if (id == Guid.Empty)
                     {
-                        observer.OnError(error);
+                        foreach (var observer in _observers)
+                        {
+                            observer.OnError(error);
+                        }
+                    }
+                    else
+                    {
+                        _identifiedObservers[id].OnError(error);
                     }
                 }
                 else
                 {
-                    foreach(var observer in _observers)
+                    if (id == Guid.Empty)
                     {
-                        observer.OnNext(response);
+                        foreach (var observer in _observers)
+                        {
+                            observer.OnNext(response);
+                        }
+                    }
+                    else
+                    {
+                        if(_identifiedObservers.ContainsKey(id))
+                        {
+                            _identifiedObservers[id].OnNext(response);
+                        }
                     }
                 }
                 buffer = new byte[INITIAL_BUFFERSIZE];
@@ -138,9 +170,25 @@ namespace Deribit.Core.Connection
             }
         }
 
+        private class idObj
+        {
+            public string? id;
+        }
+        private Guid _extractId(string json)
+        {
+            JsonSerializerSettings settings = new JsonSerializerSettings();
+            settings.NullValueHandling = NullValueHandling.Ignore;
+            var jsonObj = JsonConvert.DeserializeObject<idObj?>(json);
+            if(jsonObj is not null)
+            {
+                return new Guid(jsonObj.id);
+            }
+            return Guid.Empty;
+        }
+
         public async Task<Guid> SendMessage(IMessage message)
         {
-            Guid messageGuid = Guid.NewGuid();
+            Guid messageGuid = Guid.Empty;
             _messages.Enqueue(new Tuple<Guid, IMessage>(messageGuid, message));
             if (!Sending)
             {
@@ -150,6 +198,19 @@ namespace Deribit.Core.Connection
             }
 
             return messageGuid;
+        }
+
+        public async Task<Guid> SendMessage(IMessage message, Guid observerId)
+        {
+            _messages.Enqueue(new Tuple<Guid, IMessage>(observerId, message));
+            if (!Sending)
+            {
+#pragma warning disable 4014
+                Task.Factory.StartNew(_startSending);
+#pragma warning restore 4014
+            }
+
+            return observerId;
         }
     }
 }

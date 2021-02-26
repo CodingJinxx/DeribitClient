@@ -12,7 +12,9 @@ using Deribit.Core.Configuration;
 using Deribit.Core.Messages.Authentication;
 using Deribit.Core.Messages;
 using Deribit.Core.Connection;
+using Deribit.Core.Messages.Trading;
 using Deribit.Core.Types;
+using Deribit.Core.Validator;
 using Microsoft.Extensions.Configuration;
 using Xunit;
 using Xunit.Abstractions;
@@ -20,9 +22,9 @@ using Xunit.Abstractions;
 
 namespace DeribitTests.Integration 
 {
-    public class ConnectionConnectionTest : BaseConnectionTest
+    public class ConnectionTests : BaseConnectionTest
     {
-        public ConnectionConnectionTest(ITestOutputHelper output) : base(output)
+        public ConnectionTests(ITestOutputHelper output) : base(output)
         {
           
         }
@@ -31,7 +33,7 @@ namespace DeribitTests.Integration
         public void EstablishConnection()
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-            Connection connection = new Connection(credentials, server_address, cancellationTokenSource);
+            Connection connection = new Connection(credentials, server_address, cancellationTokenSource, new TestServerErrorHandler(output));
 
             Assert.True(connection.Connected);
         }
@@ -40,7 +42,7 @@ namespace DeribitTests.Integration
         public void Authenticate()
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-            Connection connection = new Connection(credentials, server_address, cancellationTokenSource);
+            Connection connection = new Connection(credentials, server_address, cancellationTokenSource, new TestServerErrorHandler(output));
 
             Assert.True(connection.Connected);
 
@@ -49,7 +51,7 @@ namespace DeribitTests.Integration
             connection.Subscribe(myReceiver);
             connection.SendMessage(authMessage);
 
-            SpinWait.SpinUntil(() => myReceiver.Received);
+            SpinWait.SpinUntil(() => myReceiver.Received, 1000);
 
             var unused = IResponse<AuthenticationResponse>.FromJson(myReceiver.Values.Dequeue());
         }
@@ -58,7 +60,7 @@ namespace DeribitTests.Integration
         public async void MessageDifferentiation()
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-            Connection connection = new Connection(credentials, server_address, cancellationTokenSource);
+            Connection connection = new Connection(credentials, server_address, cancellationTokenSource, new TestServerErrorHandler(output));
 
             Assert.True(connection.Connected);
 
@@ -81,7 +83,7 @@ namespace DeribitTests.Integration
         public async void Logout()
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-            Connection connection = new Connection(credentials, server_address, cancellationTokenSource);
+            Connection connection = new Connection(credentials, server_address, cancellationTokenSource, new TestServerErrorHandler(output));
 
             Assert.True(connection.Connected);
 
@@ -96,9 +98,8 @@ namespace DeribitTests.Integration
             
             LogoutMessage logoutMessage = new LogoutMessage(authResponse.result.access_token);
             connection.SendMessage(logoutMessage);
-            
-            SpinWait.SpinUntil(() => myReceiver.Values.Count > 0);
-            var logoutResponse = IResponse<EmptyResponse>.FromJson(myReceiver.Values.Dequeue());
+            SpinWait.SpinUntil(() => !connection.Connected, 10000);
+            Assert.False(connection.Connected);
         }
     }
 }

@@ -22,7 +22,7 @@ namespace DeribitTests.Integration
         [Fact]
         public void BadRequestThrowsError()
         {
-            Connection connection = new Connection(credentials, server_address, new CancellationTokenSource());
+            Connection connection = new Connection(credentials, server_address, new CancellationTokenSource(), new TestServerErrorHandler(output));
             Assert.True(connection.Connected);
 
             AuthMessage message = new AuthMessage(new Credentials(clientId: "12dsad", clientSecret: "dmjaiosda"),
