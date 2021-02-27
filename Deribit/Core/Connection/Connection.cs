@@ -23,7 +23,6 @@ namespace Deribit.Core.Connection
         public bool Receiving { get; private set; }
 
         private ClientWebSocket _webSocket;
-        private ICredentials _credentials;
         private Dictionary<Guid, IObserver<string>> _identifiedObservers;
         private List<IObserver<string>> _observers;
         private CancellationTokenSource _tokenSource;
@@ -31,9 +30,8 @@ namespace Deribit.Core.Connection
         private Uri _server_address;
         private IServerErrorHandler _errorHandler;
 
-        public Connection(ICredentials credentials, Uri serverAddress, CancellationTokenSource tokenSource, IServerErrorHandler handler)
+        public Connection(Uri serverAddress, CancellationTokenSource tokenSource, IServerErrorHandler handler)
         {
-            this._credentials = credentials;
             this._server_address = serverAddress;
             this._tokenSource = tokenSource;
             this._webSocket = new ClientWebSocket();
@@ -46,8 +44,7 @@ namespace Deribit.Core.Connection
             _startReceiving();
         }
 
-        public Connection(ICredentials credentials, Uri serverAddress, CancellationTokenSource tokenSource) : this(
-            credentials, serverAddress, tokenSource, new ServerErrorHandler())
+        public Connection(Uri serverAddress, CancellationTokenSource tokenSource) : this(serverAddress, tokenSource, new ServerErrorHandler())
         {
             
         }
@@ -114,6 +111,7 @@ namespace Deribit.Core.Connection
                     }
                 }
                 string response = Encoding.UTF8.GetString(buffer);
+                buffer = new byte[INITIAL_BUFFERSIZE];
                 var id = _extractId(response);
                 var error = _errorHandler.ValidateJson(response);
                 if (error is not null)
@@ -147,7 +145,6 @@ namespace Deribit.Core.Connection
                         }
                     }
                 }
-                buffer = new byte[INITIAL_BUFFERSIZE];
             }
             Receiving = false;
         }
@@ -169,19 +166,15 @@ namespace Deribit.Core.Connection
                 await _webSocket.SendAsync(message, WebSocketMessageType.Text, true, _tokenSource.Token);
             }
         }
-
-        private class idObj
-        {
-            public string? id;
-        }
+        
         private Guid _extractId(string json)
         {
             JsonSerializerSettings settings = new JsonSerializerSettings();
             settings.NullValueHandling = NullValueHandling.Ignore;
-            var jsonObj = JsonConvert.DeserializeObject<idObj?>(json);
-            if(jsonObj is not null)
+            var jsonObj = JsonConvert.DeserializeObject<Dictionary<string, object>>(json, settings);
+            if(jsonObj.ContainsKey("id"))
             {
-                return new Guid(jsonObj.id);
+                return new Guid(jsonObj["id"] as string);
             }
             return Guid.Empty;
         }

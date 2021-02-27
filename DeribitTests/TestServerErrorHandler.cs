@@ -11,10 +11,13 @@ namespace DeribitTests
         {
             this.output = output;
         }
-        public override ServerSideException ValidateJson(string json)
+        public override ServerSideException? ValidateJson(string json)
         {
-            var exception = base.ValidateJson(json);
-            output.WriteLine(exception.Message);
+            ServerSideException? exception = base.ValidateJson(json);
+            if (exception is not null)
+            {
+                output.WriteLine(exception?.Message);
+            }
             return exception;
         }
     }

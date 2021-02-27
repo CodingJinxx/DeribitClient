@@ -22,6 +22,7 @@ using Xunit.Abstractions;
 
 namespace DeribitTests.Integration 
 {
+    [Collection("Integration")]
     public class ConnectionTests : BaseConnectionTest
     {
         public ConnectionTests(ITestOutputHelper output) : base(output)
@@ -33,7 +34,7 @@ namespace DeribitTests.Integration
         public void EstablishConnection()
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-            Connection connection = new Connection(credentials, server_address, cancellationTokenSource, new TestServerErrorHandler(output));
+            Connection connection = new Connection(server_address, cancellationTokenSource, new TestServerErrorHandler(output));
 
             Assert.True(connection.Connected);
         }
@@ -42,7 +43,7 @@ namespace DeribitTests.Integration
         public void Authenticate()
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-            Connection connection = new Connection(credentials, server_address, cancellationTokenSource, new TestServerErrorHandler(output));
+            Connection connection = new Connection(server_address, cancellationTokenSource, new TestServerErrorHandler(output));
 
             Assert.True(connection.Connected);
 
@@ -54,36 +55,14 @@ namespace DeribitTests.Integration
             SpinWait.SpinUntil(() => myReceiver.Received, 1000);
 
             var unused = IResponse<AuthenticationResponse>.FromJson(myReceiver.Values.Dequeue());
+            connection.SendMessage(new LogoutMessage(unused.result.access_token));
         }
-
-        [Fact]
-        public async void MessageDifferentiation()
-        {
-            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-            Connection connection = new Connection(credentials, server_address, cancellationTokenSource, new TestServerErrorHandler(output));
-
-            Assert.True(connection.Connected);
-
-            AuthMessage authMessage = new AuthMessage(credentials, GrantType.ClientCredentials);
-            Receiver myReceiver = new Receiver();
-            connection.Subscribe(myReceiver);
-
-            Guid id1 = await connection.SendMessage(authMessage);
-            Guid id2 = await connection.SendMessage(authMessage);
-
-            SpinWait.SpinUntil(() => myReceiver.Values.Count == 2);
-
-            var message1 = IResponse<AuthenticationResponse>.FromJson(myReceiver.Values.Dequeue());
-            var message2 = IResponse<AuthenticationResponse>.FromJson(myReceiver.Values.Dequeue());
-
-            Assert.True((message1.id == id1.ToString() || message1.id == id2.ToString()) && (message2.id == id1.ToString() || message2.id == id2.ToString()));
-        }
-
+        
         [Fact]
         public async void Logout()
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-            Connection connection = new Connection(credentials, server_address, cancellationTokenSource, new TestServerErrorHandler(output));
+            Connection connection = new Connection(server_address, cancellationTokenSource, new TestServerErrorHandler(output));
 
             Assert.True(connection.Connected);
 

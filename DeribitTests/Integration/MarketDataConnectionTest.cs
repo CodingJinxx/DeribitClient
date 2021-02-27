@@ -20,7 +20,7 @@ namespace DeribitTests.Integration
         [Fact]
         public void BookSummaryDataTests()
         {
-            Connection connection = new Connection(this.credentials, this.server_address, new CancellationTokenSource(), new TestServerErrorHandler(output));
+            Connection connection = new Connection(this.server_address, new CancellationTokenSource(), new TestServerErrorHandler(output));
             Assert.True(connection.Connected);
 
             BookSummaryByCurrencyMessage message = new BookSummaryByCurrencyMessage
