@@ -12,7 +12,7 @@ namespace Deribit.Core.Validator
             settings.NullValueHandling = NullValueHandling.Ignore;
         }
 
-        public ServerSideException ValidateJson(string json)
+        public virtual ServerSideException ValidateJson(string json)
         {
             JsonSerializerSettings settings = new JsonSerializerSettings();
             settings.NullValueHandling = NullValueHandling.Ignore;

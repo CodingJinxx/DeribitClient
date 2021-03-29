@@ -20,7 +20,7 @@ namespace DeribitTests.Integration
         [Fact]
         public void BookSummaryDataTests()
         {
-            Connection connection = new Connection(this.credentials, this.server_address, new CancellationTokenSource());
+            Connection connection = new Connection(this.server_address, new CancellationTokenSource(), new TestServerErrorHandler(output));
             Assert.True(connection.Connected);
 
             BookSummaryByCurrencyMessage message = new BookSummaryByCurrencyMessage
@@ -37,6 +37,31 @@ namespace DeribitTests.Integration
 
             var response = IResponse<BookSummaryByCurrencyResponse[]>.FromJson(receiver.Values.Dequeue());
             Assert.True(response.result[0].ask_price != null);
+            JsonSerializerSettings settings = new JsonSerializerSettings();
+            settings.NullValueHandling = NullValueHandling.Ignore;
+            settings.Formatting = Formatting.Indented;
+            output.WriteLine(JsonConvert.SerializeObject(response, settings));
+        }
+
+        [Fact]
+        public void OrderbookDataTest()
+        {
+            Connection connection = new Connection(this.server_address, new CancellationTokenSource());
+            Assert.True(connection.Connected);
+
+            var orderbookMessage = new GetOrderBookMessage()
+            {
+                depth = 5,
+                instrument_name = "BTC-PERPETUAL"
+            };
+
+            Receiver receiver = new Receiver();
+            connection.Subscribe(receiver);
+            connection.SendMessage(orderbookMessage);
+            
+            SpinWait.SpinUntil(() => receiver.Received == true);
+
+            var response = IResponse<GetOrderBookResponse>.FromJson(receiver.Values.Dequeue());
             JsonSerializerSettings settings = new JsonSerializerSettings();
             settings.NullValueHandling = NullValueHandling.Ignore;
             settings.Formatting = Formatting.Indented;
