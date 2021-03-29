@@ -46,7 +46,7 @@ namespace DeribitTests.Integration
         [Fact]
         public void OrderbookDataTest()
         {
-            Connection connection = new Connection(this.credentials, this.server_address, new CancellationTokenSource());
+            Connection connection = new Connection(this.server_address, new CancellationTokenSource());
             Assert.True(connection.Connected);
 
             var orderbookMessage = new GetOrderBookMessage()
