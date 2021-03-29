@@ -33,7 +33,7 @@ namespace DeribitTests.Integration
         public void Buy()
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-            Connection connection = new Connection(credentials, server_address, cancellationTokenSource);
+            Connection connection = new Connection(server_address, cancellationTokenSource, new TestServerErrorHandler(output));
 
             Assert.True(connection.Connected);
 
@@ -70,7 +70,7 @@ namespace DeribitTests.Integration
         public void Sell()
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-            Connection connection = new Connection(credentials, server_address, cancellationTokenSource);
+            Connection connection = new Connection(server_address, cancellationTokenSource, new TestServerErrorHandler(output));
 
             Assert.True(connection.Connected);
 
@@ -107,7 +107,7 @@ namespace DeribitTests.Integration
         public void Edit()
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-            Connection connection = new Connection(credentials, server_address, cancellationTokenSource);
+            Connection connection = new Connection(server_address, cancellationTokenSource, new TestServerErrorHandler(output));
 
             Assert.True(connection.Connected);
 
@@ -157,7 +157,7 @@ namespace DeribitTests.Integration
         public void Cancel()
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-            Connection connection = new Connection(credentials, server_address, cancellationTokenSource);
+            Connection connection = new Connection(server_address, cancellationTokenSource, new TestServerErrorHandler(output));
 
             Assert.True(connection.Connected);
 

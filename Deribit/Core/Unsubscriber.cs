@@ -1,24 +1,42 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Deribit.Core
 {
-    internal class Unsubscriber<T> : IDisposable
+    internal class Unsubscriber<T, C> : IDisposable where C : ICollection
     {
-        private readonly List<IObserver<T>> _observers;
+        private readonly C _observers;
         private readonly IObserver<T> _observer;
+        private readonly Guid _observerId;
+        
 
-        internal Unsubscriber (List<IObserver<T>> observers, IObserver<T> observer)
+        internal Unsubscriber (C observers, IObserver<T> observer, Guid observerId)
         {
             this._observers = observers;
             this._observer = observer;
+            this._observerId = observerId;
         }
 
         public void Dispose()
         {
-            if (_observers.Contains(_observer))
+            if (_observers is Dictionary<Guid, IObserver<T>> dict)
             {
-                _observers.Remove(_observer);
+                if (dict.ContainsKey(_observerId))
+                {
+                    dict.Remove(_observerId);
+                }
+            }
+            else if (_observers is List<IObserver<T>> list)
+            {
+                if (list.Contains(_observer))
+                {
+                    list.Remove(_observer);
+                }
+            }
+            else
+            {
+                throw new Exception("Unsupported Collection Type for Unsubscriber");
             }
         }
     }
