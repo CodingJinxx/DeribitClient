@@ -96,9 +96,8 @@ namespace DeribitTests.Integration
             
             LogoutMessage logoutMessage = new LogoutMessage(authResponse.result.access_token);
             connection.SendMessage(logoutMessage);
-            
-            SpinWait.SpinUntil(() => myReceiver.Values.Count > 0);
-            var logoutResponse = IResponse<EmptyResponse>.FromJson(myReceiver.Values.Dequeue());
+
+            SpinWait.SpinUntil(() => connection.Connected == false);
         }
     }
 }

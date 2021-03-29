@@ -16,7 +16,10 @@ namespace Deribit.Core.Connection
     {
         private const int INITIAL_BUFFERSIZE = 1024;
         private const int BUFFERSIZE_INCREMENT = 1024;
-        public bool Connected { get; private set; }
+        public bool Connected
+        {
+            get => _webSocket.State == WebSocketState.Open;
+        }
         public bool Sending { get; private set; }
         public bool Receiving { get; private set; }
 
@@ -66,8 +69,6 @@ namespace Deribit.Core.Connection
             {
                 throw new ConnectionFailedException(_server_address, _webSocket.State);
             }
-
-            Connected = true;
         }
 
         private async Task _startReceiving()
@@ -99,7 +100,7 @@ namespace Deribit.Core.Connection
                         free = buffer.Length - offset;
                     }
                 }
-                string response = Encoding.UTF8.GetString(buffer);
+                string response = Encoding.UTF8.GetString(buffer);   
                 var error = _errorHandler.ValidateJson(response);
                 if (error is not null)
                 {
