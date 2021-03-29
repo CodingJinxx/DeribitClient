@@ -7,6 +7,7 @@
     <PackageId>DeribitClient</PackageId>
     <Version>0.1.4</Version>
     <Authors>CodingJinxx</Authors>
+    <PackageVersion>0.1.5</PackageVersion>
   </PropertyGroup>
 
   <ItemGroup>
