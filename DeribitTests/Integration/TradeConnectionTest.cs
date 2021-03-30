@@ -34,6 +34,8 @@ namespace DeribitTests.Integration
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
             Connection connection = new Connection(server_address, cancellationTokenSource, new TestServerErrorHandler(output));
+            connection.Connect();
+
 
             Assert.True(connection.Connected);
 
@@ -71,6 +73,8 @@ namespace DeribitTests.Integration
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
             Connection connection = new Connection(server_address, cancellationTokenSource, new TestServerErrorHandler(output));
+            connection.Connect();
+
 
             Assert.True(connection.Connected);
 
@@ -108,6 +112,8 @@ namespace DeribitTests.Integration
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
             Connection connection = new Connection(server_address, cancellationTokenSource, new TestServerErrorHandler(output));
+            connection.Connect();
+
 
             Assert.True(connection.Connected);
 
@@ -158,6 +164,8 @@ namespace DeribitTests.Integration
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
             Connection connection = new Connection(server_address, cancellationTokenSource, new TestServerErrorHandler(output));
+            connection.Connect();
+
 
             Assert.True(connection.Connected);
 

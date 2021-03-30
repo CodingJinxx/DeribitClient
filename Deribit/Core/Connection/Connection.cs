@@ -8,8 +8,12 @@ using System.Threading.Tasks;
 using System.Xml.Schema;
 using Deribit.Core.Authentication;
 using Deribit.Core.Messages;
+using Deribit.Core.Messages.Authentication;
+using Deribit.Core.Messages.Supporting;
+using Deribit.Core.Notifications;
 using Deribit.Core.Validator;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Deribit.Core.Connection
@@ -18,15 +22,21 @@ namespace Deribit.Core.Connection
     {
         private const int INITIAL_BUFFERSIZE = 1024;
         private const int BUFFERSIZE_INCREMENT = 1024;
-        public bool Connected { get => _webSocket.State == WebSocketState.Open; }
+
+        public bool Connected
+        {
+            get => _webSocket.State == WebSocketState.Open;
+        }
+
         public bool Sending { get; private set; }
         public bool Receiving { get; private set; }
 
         private ClientWebSocket _webSocket;
         private Dictionary<Guid, IObserver<string>> _identifiedObservers;
         private List<IObserver<string>> _observers;
+        private List<IObserver<string>> _notificationObservers;
         private CancellationTokenSource _tokenSource;
-        private Queue<Tuple<Guid, IMessage>> _messages; 
+        private Queue<Tuple<Guid, IMessage>> _messages;
         private Uri _server_address;
         private IServerErrorHandler _errorHandler;
 
@@ -34,20 +44,34 @@ namespace Deribit.Core.Connection
         {
             this._server_address = serverAddress;
             this._tokenSource = tokenSource;
-            this._webSocket = new ClientWebSocket();
             this._identifiedObservers = new Dictionary<Guid, IObserver<string>>();
+            this._notificationObservers = new List<IObserver<string>>();
             this._observers = new List<IObserver<string>>();
             this._messages = new Queue<Tuple<Guid, IMessage>>();
             this._errorHandler = handler;
+        }
+
+        public void Connect()
+        {
+            this._webSocket = new ClientWebSocket();
 
             _establishConnection().Wait();
             _startReceiving();
         }
 
-        public Connection(Uri serverAddress, CancellationTokenSource tokenSource) : this(serverAddress, tokenSource, new ServerErrorHandler())
+        public void Disconnect()
         {
-            
+            var logoutRequest = new LogoutMessage();
+            this.SendMessage(logoutRequest).Wait();
+            SpinWait.SpinUntil(() => this.Sending == false);
+            this._webSocket.CloseAsync(WebSocketCloseStatus.Empty, "", this._tokenSource.Token);
         }
+
+        public Connection(Uri serverAddress, CancellationTokenSource tokenSource) : this(serverAddress, tokenSource,
+            new ServerErrorHandler())
+        {
+        }
+
         public IDisposable Subscribe(IObserver<string> observer, Guid observerId)
         {
             if (observerId == Guid.Empty)
@@ -58,11 +82,13 @@ namespace Deribit.Core.Connection
                     return new Unsubscriber<string, List<IObserver<string>>>(_observers, observer, observerId);
                 }
             }
-            else if(!_identifiedObservers.ContainsKey(observerId) && !_identifiedObservers.ContainsValue(observer))
+            else if (!_identifiedObservers.ContainsKey(observerId) && !_identifiedObservers.ContainsValue(observer))
             {
                 _identifiedObservers.TryAdd(observerId, observer);
-                return new Unsubscriber<string, Dictionary<Guid, IObserver<string>>>(_identifiedObservers, observer, observerId);
+                return new Unsubscriber<string, Dictionary<Guid, IObserver<string>>>(_identifiedObservers, observer,
+                    observerId);
             }
+
             throw new Exception("Could not add Observer");
         }
 
@@ -75,7 +101,7 @@ namespace Deribit.Core.Connection
         {
             await _webSocket.ConnectAsync(_server_address, _tokenSource.Token);
 
-            if(_webSocket.State != WebSocketState.Open)
+            if (_webSocket.State != WebSocketState.Open)
             {
                 throw new ConnectionFailedException(_server_address, _webSocket.State);
             }
@@ -83,7 +109,7 @@ namespace Deribit.Core.Connection
 
         private async Task _startReceiving()
         {
-            if(Receiving) throw new InternalConnectionErrorException("Already receiving");
+            if (Receiving) throw new InternalConnectionErrorException("Already receiving");
             var buffer = new byte[INITIAL_BUFFERSIZE];
             while (!_tokenSource.Token.IsCancellationRequested)
             {
@@ -92,7 +118,8 @@ namespace Deribit.Core.Connection
                 int offset = 0;
                 while (true)
                 {
-                    var result = await _webSocket.ReceiveAsync(new ArraySegment<byte>(buffer, offset, free), _tokenSource.Token);
+                    var result = await _webSocket.ReceiveAsync(new ArraySegment<byte>(buffer, offset, free),
+                        _tokenSource.Token);
                     offset += result.Count;
                     free -= result.Count;
                     if (result.EndOfMessage)
@@ -110,6 +137,7 @@ namespace Deribit.Core.Connection
                         free = buffer.Length - offset;
                     }
                 }
+
                 string response = Encoding.UTF8.GetString(buffer);
                 buffer = new byte[INITIAL_BUFFERSIZE];
                 var id = _extractId(response);
@@ -130,7 +158,30 @@ namespace Deribit.Core.Connection
                 }
                 else
                 {
-                    if (id == Guid.Empty)
+                    if (ParseNotification(response, out NotificationBase<object> notification))
+                    {
+                        HeartbeatNotification heartbeat = null;
+                        try
+                        {
+                            heartbeat = (notification.@params as JObject).ToObject<HeartbeatNotification>();
+                        }
+                        catch (Exception e)
+                        {
+                         
+                        }
+                        if (heartbeat is null)
+                        {
+                            foreach (var observer in _notificationObservers)
+                            {
+                                observer.OnNext(response);
+                            }
+                        }
+                        else
+                        {
+                            HandleHeartbeat(heartbeat);
+                        }
+                    }
+                    else if (id == Guid.Empty)
                     {
                         foreach (var observer in _observers)
                         {
@@ -139,21 +190,56 @@ namespace Deribit.Core.Connection
                     }
                     else
                     {
-                        if(_identifiedObservers.ContainsKey(id))
+                        if (_identifiedObservers.ContainsKey(id))
                         {
                             _identifiedObservers[id].OnNext(response);
                         }
                     }
                 }
             }
+
             Receiving = false;
+        }
+
+        public bool ParseNotification(string json, out NotificationBase<object> notification)
+        {
+            try
+            {
+                notification = JsonConvert.DeserializeObject<NotificationBase<object>>(json);
+                return true;
+            }
+            catch (Exception e)
+            {
+                notification = null;
+                return false;
+            }
+        }
+
+        public void HandleHeartbeat(HeartbeatNotification heartbeat)
+        {
+            if (heartbeat.type == "test_request")
+            {
+                var responseMessage = new TestMessage();
+                SendMessage(responseMessage);
+            }
+        }
+
+        public IDisposable SubscribeNotifications(IObserver<string> observer)
+        {
+            if (!_notificationObservers.Contains(observer))
+            {
+                _notificationObservers.Add(observer);
+                return new Unsubscriber<string, List<IObserver<string>>>(_observers, observer, Guid.Empty);
+            }
+
+            throw new Exception("Could not add Observer");
         }
 
         private async Task _startSending()
         {
             while (!_tokenSource.Token.IsCancellationRequested)
             {
-                if(_messages.Count == 0)
+                if (_messages.Count == 0)
                 {
                     Sending = false;
                     return;
@@ -166,16 +252,17 @@ namespace Deribit.Core.Connection
                 await _webSocket.SendAsync(message, WebSocketMessageType.Text, true, _tokenSource.Token);
             }
         }
-        
+
         private Guid _extractId(string json)
         {
             JsonSerializerSettings settings = new JsonSerializerSettings();
             settings.NullValueHandling = NullValueHandling.Ignore;
             var jsonObj = JsonConvert.DeserializeObject<Dictionary<string, object>>(json, settings);
-            if(jsonObj.ContainsKey("id"))
+            if (jsonObj.ContainsKey("id"))
             {
                 return new Guid(jsonObj["id"] as string);
             }
+
             return Guid.Empty;
         }
 

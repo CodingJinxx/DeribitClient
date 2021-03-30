@@ -26,6 +26,8 @@ namespace DeribitTests.Integration
             Receiver receiverTwo = new Receiver();
 
             Connection connection = new Connection(server_address,new CancellationTokenSource(), new TestServerErrorHandler(output));
+            connection.Connect();
+
             Assert.True(connection.Connected);
 
             connection.Subscribe(receiverOne);
@@ -68,7 +70,7 @@ namespace DeribitTests.Integration
             var responseTwo = IResponse<BuyResponse>.FromJson(receiverTwo.Values.Dequeue());
             Assert.True(responseTwo.result.order.amount == 500.0f);
             Assert.True(responseTwo.result.order.instrument_name == "ETH-PERPETUAL");
-            connection.SendMessage(new LogoutMessage(authResponse.result.access_token));
+            connection.SendMessage(new LogoutMessage());
         }
     }
 }
