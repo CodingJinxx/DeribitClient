@@ -20,8 +20,8 @@ namespace Deribit.Core.Messages.MarketData
         public string currency_long { get; set; }
         public int fee_precision { get; set; }
         public int min_confirmations { get; set; }
-        public float min_withdrawal_fee { get; set; }
-        public float withdrawal_fee { get; set; }
+        public decimal min_withdrawal_fee { get; set; }
+        public decimal withdrawal_fee { get; set; }
         public WithdrawalPriority[] withdrawal_priorities { get; set; }
     }
 }

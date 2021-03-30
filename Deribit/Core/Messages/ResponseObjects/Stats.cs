@@ -2,9 +2,9 @@
 {
     public class Stats
     {
-        public float high { get; set; }
-        public float low { get; set; }
-        public float? price_change { get; set; }
-        public float volume { get; set; }
+        public decimal high { get; set; }
+        public decimal low { get; set; }
+        public decimal? price_change { get; set; }
+        public decimal volume { get; set; }
     }
 }

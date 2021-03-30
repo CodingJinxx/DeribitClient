@@ -2,10 +2,10 @@
 {
     public class Greeks
     {
-        public float delta { get; set; }
-        public float gamma { get; set; }
-        public float rho { get; set; }
-        public float theta { get; set; }
-        public float vega { get; set; }
+        public decimal delta { get; set; }
+        public decimal gamma { get; set; }
+        public decimal rho { get; set; }
+        public decimal theta { get; set; }
+        public decimal vega { get; set; }
     }
 }
