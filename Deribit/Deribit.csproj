@@ -5,9 +5,9 @@
     <LangVersion>9</LangVersion>
     <Nullable>enable</Nullable>
     <PackageId>DeribitClient</PackageId>
-    <Version>0.1.4</Version>
+    <Version>0.1.6</Version>
     <Authors>CodingJinxx</Authors>
-    <PackageVersion>0.1.5</PackageVersion>
+    <PackageVersion>0.1.6</PackageVersion>
   </PropertyGroup>
 
   <ItemGroup>

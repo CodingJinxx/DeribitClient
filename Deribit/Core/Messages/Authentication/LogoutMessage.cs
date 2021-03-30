@@ -11,19 +11,15 @@ namespace Deribit.Core.Messages.Authentication
     {
         [System.Text.Json.Serialization.JsonIgnore]
         public string MethodName { get => "/private/logout"; }
-        public string access_token { get; set; }
 
-        public LogoutMessage(string accessToken)
+        public LogoutMessage()
         {
-            this.access_token = accessToken;
+          
         }
 
         public void CheckValidity()
         {
-            if (this.access_token is null || this.access_token.Count() < 1)
-            {
-                throw new InvalidParameterException(this.access_token.GetType().ToString(), this.access_token, nameof(this.access_token));
-            }
+          
         }
     }
 }
