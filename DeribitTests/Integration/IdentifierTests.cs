@@ -43,15 +43,15 @@ namespace DeribitTests.Integration
             BuyMessage buyMessage = new BuyMessage()
             {
                 instrument_name = "BTC-PERPETUAL",
-                amount = 1000.0f,
-                price = 20000.0f
+                amount = 1000.0m,
+                price = 20000.0m
             };
 
             SellMessage sellMessage = new SellMessage()
             {
                 instrument_name = "ETH-PERPETUAL",
-                amount = 500.0f,
-                price = 1000.0f
+                amount = 500.0m,
+                price = 1000.0m
             };
 
             
@@ -60,7 +60,7 @@ namespace DeribitTests.Integration
             Assert.True(receiverOne.Values.Count == 1);
             Assert.True(receiverTwo.Values.Count == 0);
             var responseOne = IResponse<BuyResponse>.FromJson(receiverOne.Values.Dequeue());
-            Assert.True(responseOne.result.order.amount == 1000.0f);
+            Assert.True(responseOne.result.order.amount == 1000.0m);
             Assert.True(responseOne.result.order.instrument_name == "BTC-PERPETUAL");
             
             connection.SendMessage(sellMessage, receiverTwo.Id);
@@ -68,7 +68,7 @@ namespace DeribitTests.Integration
             Assert.True(receiverOne.Values.Count == 0);
             Assert.True(receiverTwo.Values.Count == 1);
             var responseTwo = IResponse<BuyResponse>.FromJson(receiverTwo.Values.Dequeue());
-            Assert.True(responseTwo.result.order.amount == 500.0f);
+            Assert.True(responseTwo.result.order.amount == 500.0m);
             Assert.True(responseTwo.result.order.instrument_name == "ETH-PERPETUAL");
             connection.SendMessage(new LogoutMessage());
         }
