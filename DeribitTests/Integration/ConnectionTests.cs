@@ -35,6 +35,7 @@ namespace DeribitTests.Integration
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
             Connection connection = new Connection(server_address, cancellationTokenSource, new TestServerErrorHandler(output));
+            connection.Connect();
 
             Assert.True(connection.Connected);
         }
@@ -44,6 +45,8 @@ namespace DeribitTests.Integration
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
             Connection connection = new Connection(server_address, cancellationTokenSource, new TestServerErrorHandler(output));
+            connection.Connect();
+
 
             Assert.True(connection.Connected);
 
@@ -55,7 +58,7 @@ namespace DeribitTests.Integration
             SpinWait.SpinUntil(() => myReceiver.Received, 1000);
 
             var unused = IResponse<AuthenticationResponse>.FromJson(myReceiver.Values.Dequeue());
-            connection.SendMessage(new LogoutMessage(unused.result.access_token));
+            connection.SendMessage(new LogoutMessage());
         }
         
         [Fact]
@@ -63,6 +66,8 @@ namespace DeribitTests.Integration
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
             Connection connection = new Connection(server_address, cancellationTokenSource, new TestServerErrorHandler(output));
+            connection.Connect();
+
 
             Assert.True(connection.Connected);
 
@@ -75,10 +80,23 @@ namespace DeribitTests.Integration
 
             var authResponse = IResponse<AuthenticationResponse>.FromJson(myReceiver.Values.Dequeue());
             
-            LogoutMessage logoutMessage = new LogoutMessage(authResponse.result.access_token);
+            LogoutMessage logoutMessage = new LogoutMessage();
             connection.SendMessage(logoutMessage);
 
             SpinWait.SpinUntil(() => connection.Connected == false);
+        }
+
+        [Fact]
+        public async void ConnectDisconnectConnect()
+        {
+            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+            Connection connection = new Connection(server_address, cancellationTokenSource, new TestServerErrorHandler(output));
+            connection.Connect();
+            Assert.True(connection.Connected);
+            connection.Disconnect();
+            Assert.True(!connection.Connected);
+            connection.Connect();
+            Assert.True(connection.Connected);
         }
     }
 }
