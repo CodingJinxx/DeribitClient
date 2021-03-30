@@ -51,9 +51,9 @@ namespace DeribitTests.Integration
             BuyMessage buyMessage = new BuyMessage
             {
                 instrument_name = "BTC-PERPETUAL",
-                amount = 40.0f,
+                amount = 40.0m,
                 type = OrderType.Limit,
-                price = 35000.0f,
+                price = 35000.0m,
                 label = "market04022021"
             };
             connection.SendMessage(buyMessage);
@@ -90,9 +90,9 @@ namespace DeribitTests.Integration
             SellMessage sellMessage = new SellMessage
             {
                 instrument_name = "BTC-PERPETUAL",
-                amount = 40.0f,
+                amount = 40.0m,
                 type = OrderType.Limit,
-                price = 35000.0f,
+                price = 35000.0m,
                 label = "market04022021"
             };
             connection.SendMessage(sellMessage);
@@ -129,9 +129,9 @@ namespace DeribitTests.Integration
             BuyMessage buyMessage = new BuyMessage
             {
                 instrument_name = "BTC-PERPETUAL",
-                amount = 30.0f,
+                amount = 30.0m,
                 type = OrderType.Limit,
-                price = 35000.0f,
+                price = 35000.0m,
                 label = "market04022021"
             };
             connection.SendMessage(buyMessage);
@@ -148,7 +148,7 @@ namespace DeribitTests.Integration
             EditMessage editMessage = new EditMessage
             {
                 order_id = buyResponse.result.order.order_id,
-                amount = 10.0f,
+                amount = 10.0m,
             };
 
             connection.SendMessage(editMessage);
@@ -181,9 +181,9 @@ namespace DeribitTests.Integration
             BuyMessage buyMessage = new BuyMessage
             {
                 instrument_name = "BTC-PERPETUAL",
-                amount = 40.0f,
+                amount = 40.0m,
                 type = OrderType.Limit,
-                price = 35000.0f,
+                price = 35000.0m,
                 label = "market04022021"
             };
             connection.SendMessage(buyMessage);

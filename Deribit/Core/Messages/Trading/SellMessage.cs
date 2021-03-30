@@ -10,16 +10,16 @@ namespace Deribit.Core.Messages.Trading
         [JsonIgnore]
         public string MethodName { get => "/private/sell"; }
         public string instrument_name { get; set; }
-        public float amount { get; set; }
+        public decimal amount { get; set; }
         public string type { get; set; }
         public string label { get; set; }
-        public float price { get; set; }
+        public decimal price { get; set; }
         public string time_in_force { get; set; }
-        public float max_show { get; set; }
+        public decimal max_show { get; set; }
         public bool post_only { get; set; }
         public bool reject_post_only { get; set; }
         public bool reduce_only { get; set; }
-        public float stop_price { get; set; }
+        public decimal stop_price { get; set; }
         public string trigger { get; set; }
         public string advanced { get; set; }
         public bool mmp { get; set; }

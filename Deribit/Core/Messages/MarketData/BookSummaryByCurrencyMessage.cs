@@ -23,26 +23,26 @@ namespace Deribit.Core.Messages.MarketData
 
     public class BookSummaryByCurrencyResponse : IResponse<BookSummaryByCurrencyResponse>
     {
-        public float? ask_price { get; set; }
+        public decimal? ask_price { get; set; }
         public string base_currency { get; set; }
-        public float? bid_price { get; set; }
+        public decimal? bid_price { get; set; }
         public long creation_timestamp { get; set; }
-        public float? current_funding { get; set; }
-        public float? estimated_delivery_price { get; set; }
-        public float funding_8h { get; set; }
-        public float high { get; set; }
+        public decimal? current_funding { get; set; }
+        public decimal? estimated_delivery_price { get; set; }
+        public decimal funding_8h { get; set; }
+        public decimal high { get; set; }
         public string instrument_name { get; set; }
-        public float interest_rate { get; set; }
-        public float? last { get; set; }
-        public float? low { get; set; }
-        public float mark_price { get; set; }
-        public float mid_price { get; set; }
-        public float open_interest { get; set; }
-        public float? price_change { get; set; }
+        public decimal interest_rate { get; set; }
+        public decimal? last { get; set; }
+        public decimal? low { get; set; }
+        public decimal mark_price { get; set; }
+        public decimal mid_price { get; set; }
+        public decimal open_interest { get; set; }
+        public decimal? price_change { get; set; }
         public string quote_currency { get; set; }
         public string? underlying_index { get; set; }
-        public float? underlying_price { get; set; }
-        public float volume { get; set; }
-        public float? volume_usd { get; set; }
+        public decimal? underlying_price { get; set; }
+        public decimal volume { get; set; }
+        public decimal? volume_usd { get; set; }
     }
 }
