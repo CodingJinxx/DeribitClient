@@ -24,6 +24,8 @@ namespace DeribitTests.Integration
         public void BadRequestThrowsError()
         {
             Connection connection = new Connection(server_address, new CancellationTokenSource(), new TestServerErrorHandler(output));
+            connection.Connect();
+
             Assert.True(connection.Connected);
 
             AuthMessage message = new AuthMessage(new Credentials(clientId: "12dsad", clientSecret: "dmjaiosda"),
