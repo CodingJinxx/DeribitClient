@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30225.117
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Deribit", "Deribit\Deribit.csproj", "{10043CAD-D28C-4835-B80B-EADC1C511FBD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeribitClient", "DeribitClient\DeribitClient.csproj", "{3FBA2369-777D-4012-AB43-0D1C174EB4A8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeribitTests", "DeribitTests\DeribitTests.csproj", "{B5041DFA-5EA1-440C-A69E-3E38AD26DE5C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeribitClient.Tests", "DeribitClient.Tests\DeribitClient.Tests.csproj", "{01097A32-441A-4A77-BFD9-2C129BBC7A29}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,14 +13,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{10043CAD-D28C-4835-B80B-EADC1C511FBD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{10043CAD-D28C-4835-B80B-EADC1C511FBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{10043CAD-D28C-4835-B80B-EADC1C511FBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{10043CAD-D28C-4835-B80B-EADC1C511FBD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B5041DFA-5EA1-440C-A69E-3E38AD26DE5C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B5041DFA-5EA1-440C-A69E-3E38AD26DE5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B5041DFA-5EA1-440C-A69E-3E38AD26DE5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B5041DFA-5EA1-440C-A69E-3E38AD26DE5C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3FBA2369-777D-4012-AB43-0D1C174EB4A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3FBA2369-777D-4012-AB43-0D1C174EB4A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3FBA2369-777D-4012-AB43-0D1C174EB4A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3FBA2369-777D-4012-AB43-0D1C174EB4A8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{01097A32-441A-4A77-BFD9-2C129BBC7A29}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{01097A32-441A-4A77-BFD9-2C129BBC7A29}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{01097A32-441A-4A77-BFD9-2C129BBC7A29}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{01097A32-441A-4A77-BFD9-2C129BBC7A29}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
