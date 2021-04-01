@@ -2,13 +2,15 @@
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
-namespace DeribitClient
+namespace DeribitClient.Core
 {
     public class XChannel<T>
     {
         private readonly Channel<T> _channel;
         private readonly CancellationTokenSource _tokenSource;
         private readonly ChannelReader<T> _reader;
+
+        public int Count { get => this._reader.Count; }
 
         public XChannel()
         {
