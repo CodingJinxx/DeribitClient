@@ -18,13 +18,13 @@ jobs:
       - name: Build
         run: dotnet build --no-restore
       - name: Pack
-        run: dotnet pack Deribit
+        run: dotnet pack DeribitClient
       - name: Publish
         id: publish_nuget
         uses: rohith/publish-nuget@v2
         with:
-          PROJECT_FILE_PATH: DeribitClient/DeribitClient/DeribitClient.csproj
+          PROJECT_FILE_PATH: DeribitClient/DeribitClient.csproj
           PACKAGE_NAME: DeribitClient
-          VERSION_FILE_PATH: DeribitClient/DeribitClient/DeribitClient.csproj
+          VERSION_FILE_PATH: DeribitClient/DeribitClient.csproj
           VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
           NUGET_KEY: ${{secrets.NUGET_SECRET_KEY}}
