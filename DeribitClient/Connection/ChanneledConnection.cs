@@ -9,6 +9,7 @@ using DeribitClient.Messages;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using DeribitClient.Core;
 
 
 namespace DeribitClient
@@ -18,35 +19,60 @@ namespace DeribitClient
         private ClientWebSocket _webSocket;
         private ConnectionSettings _settings;
         private CancellationTokenSource _tokenSource;
+
         
         // From Server to Connection
         public XChannel<string> Incoming { get; private set; }
         // From Connection to Server
         public XChannel<string> Outgoing { get; private set; }
-        public bool Connected { get => _webSocket.State == WebSocketState.Open; }
+
+        public bool Connected
+        {
+            get
+            {
+                if (this._webSocket is null) return false;
+                return this._webSocket.State == WebSocketState.Open;
+            }
+        }
+
+        private bool _connectionState;
+        public event EventHandler<bool> OnConnectionChanged;
 
         public ChanneledConnection(IOptions<ConnectionSettings> settings)
         {
             this._settings = settings.Value;
-            this._webSocket = new ClientWebSocket();
-            this._tokenSource = new CancellationTokenSource();
+            this._connectionState = false;
+        }
+        private void MonitorConnection()
+        {
+            if (this._connectionState != this.Connected)
+            {
+                this._connectionState = this.Connected;
+                OnConnectionChanged?.Invoke(this, this._connectionState);
+            }
         }
 
         public async Task Connect()
         {
+            this._webSocket = new ClientWebSocket();
+            this._tokenSource = new CancellationTokenSource();
             this.Incoming = new XChannel<string>();
             this.Outgoing = new XChannel<string>();
             await _webSocket.ConnectAsync(new Uri(this._settings.ServerAddress), this._tokenSource.Token);
             this._incomingWebsocketConsumer(this._tokenSource.Token);
             this._outgoingChannelConsumer(this._tokenSource.Token);
+            this.MonitorConnection();
         }
 
         public async Task Disconnect()
         {
-            await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closed connection", this._tokenSource.Token);
-            this._tokenSource.Cancel();
             this.Incoming.CancelChannel();
             this.Outgoing.CancelChannel();
+
+            await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closed connection", this._tokenSource.Token);
+            this._tokenSource.Cancel();
+            this._webSocket.Dispose();
+            this.MonitorConnection();
         }
 
         public void UpdateConnectionSettings(ConnectionSettings settings)
@@ -63,14 +89,14 @@ namespace DeribitClient
             {
                 while (!token.IsCancellationRequested)
                 {
-                    var buffer = new ArraySegment<byte>(new byte[1024]);
-                    var result = await this._webSocket.ReceiveAsync(buffer, token);
-                    if (result.MessageType == WebSocketMessageType.Close)
+                    this.MonitorConnection();
+                    if (Connected)
                     {
-                        await this.Disconnect();
+                        var buffer = new ArraySegment<byte>(new byte[1024]);
+                        var result = await this._webSocket.ReceiveAsync(buffer, token);
+                        string response = Encoding.UTF8.GetString(buffer);
+                        Incoming.Write(response);
                     }
-                    string response = Encoding.UTF8.GetString(buffer);
-                    Incoming.Write(response);
                 }
             }
         }
@@ -84,11 +110,17 @@ namespace DeribitClient
             {
                 while (!token.IsCancellationRequested)
                 {
-                    var message = await this.Outgoing.Read();
-                    ArraySegment<byte> encodedMessage = Encoding.UTF8.GetBytes(message);
-                    this._webSocket.SendAsync(encodedMessage, WebSocketMessageType.Text, true, token);
+                    this.MonitorConnection();
+                    if (Connected)
+                    {
+                        var message = await this.Outgoing.Read();
+                        ArraySegment<byte> encodedMessage = Encoding.UTF8.GetBytes(message);
+                        this._webSocket.SendAsync(encodedMessage, WebSocketMessageType.Text, true, token);
+                    }
                 }
             }
         }
+
+       
     }
 }
