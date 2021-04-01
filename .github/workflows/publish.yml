@@ -23,8 +23,8 @@ jobs:
         id: publish_nuget
         uses: rohith/publish-nuget@v2
         with:
-          PROJECT_FILE_PATH: Deribit/Deribit.csproj
+          PROJECT_FILE_PATH: Deribit/DeribitClient.csproj
           PACKAGE_NAME: DeribitClient
-          VERSION_FILE_PATH: Deribit/Deribit.csproj
+          VERSION_FILE_PATH: Deribit/DeribitClient.csproj
           VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
           NUGET_KEY: ${{secrets.NUGET_SECRET_KEY}}
