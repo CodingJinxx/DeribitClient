@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -92,9 +93,36 @@ namespace DeribitClient
                     this.MonitorConnection();
                     if (Connected)
                     {
-                        var buffer = new ArraySegment<byte>(new byte[1024]);
-                        var result = await this._webSocket.ReceiveAsync(buffer, token);
-                        string response = Encoding.UTF8.GetString(buffer);
+                        var buffer = new ArraySegment<byte>(new byte[2048]);
+                        string response = "";
+                        do
+                        {
+                            WebSocketReceiveResult result;
+                            using (var ms = new MemoryStream())
+                            {
+                                do
+                                {
+                                    result = await _webSocket.ReceiveAsync(buffer, CancellationToken.None);
+                                    ms.Write(buffer.Array, buffer.Offset, result.Count);
+                                } while (!result.EndOfMessage);
+
+                                if (result.MessageType == WebSocketMessageType.Close)
+                                    break;
+
+                                ms.Seek(0, SeekOrigin.Begin);
+                                using (var reader = new StreamReader(ms, Encoding.UTF8))
+                                {
+                                    response = await reader.ReadToEndAsync();
+                                    break;
+                                }
+                            }
+                        } while (true);
+
+                        if (response == "")
+                        {
+                            throw new Exception("Empty Response Received");
+                        }
+
                         Incoming.Write(response);
                     }
                 }
