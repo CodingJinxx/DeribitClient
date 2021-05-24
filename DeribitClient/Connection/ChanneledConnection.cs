@@ -31,7 +31,7 @@ namespace DeribitClient
         {
             get
             {
-                if (this._webSocket is null) return false;
+                if (this._webSocket is null) return false ;
                 return this._webSocket.State == WebSocketState.Open;
             }
         }
