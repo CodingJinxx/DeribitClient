@@ -95,6 +95,7 @@ namespace DeribitClient
                     {
                         var buffer = new ArraySegment<byte>(new byte[2048]);
                         string response = "";
+                        bool serverClosedConnection = false;
                         do
                         {
                             WebSocketReceiveResult result;
@@ -107,7 +108,10 @@ namespace DeribitClient
                                 } while (!result.EndOfMessage);
 
                                 if (result.MessageType == WebSocketMessageType.Close)
+                                {
+                                    serverClosedConnection = true;
                                     break;
+                                }
 
                                 ms.Seek(0, SeekOrigin.Begin);
                                 using (var reader = new StreamReader(ms, Encoding.UTF8))
@@ -118,12 +122,13 @@ namespace DeribitClient
                             }
                         } while (true);
 
-                        if (response == "")
+                        if (!serverClosedConnection && response == "")
                         {
                             throw new Exception("Empty Response Received");
                         }
 
-                        this.Incoming.Write(response);
+                        if(!serverClosedConnection)
+                            Incoming.Write(response);
                     }
                 }
             }
