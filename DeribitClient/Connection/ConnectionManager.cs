@@ -55,14 +55,14 @@ namespace DeribitClient
             this._serverErrorHandler = errorHandler;
             this._logger = log;
             this.Incoming = new XChannel<Dictionary<string, object>>();
-            this._connection.OnConnectionChanged += (sender, b) => OnConnectionChange?.Invoke(sender, b);
+            this._connection.OnConnectionChanged += (sender, b) => this.OnConnectionChange?.Invoke(sender, b);
         }
 
         public async Task Connect()
         {
             this._logger.LogInformation("Connecting");
             await this._connection.Connect();
-            MessageConsumer(this._tokenSource.Token);
+            this.MessageConsumer(this._tokenSource.Token);
         }
 
         public async Task Disconnect()
@@ -74,7 +74,7 @@ namespace DeribitClient
 
         public void Send(IRequest message)
         {
-            var id = ConnectionManager.getSequence().ToString();
+            var id = getSequence().ToString();
             this._connection.Outgoing.Write(message.ToJson(id, out string methodName));
             this._methodMappings.TryAdd(id, methodName);
             this._logger.LogInformation($"Send - {id} {methodName}", id, methodName);
@@ -82,7 +82,7 @@ namespace DeribitClient
 
         private void InternalSend(IRequest message)
         {
-            var id = (ConnectionManager.getSequence() * -1).ToString();
+            var id = (getSequence() * -1).ToString();
             this._connection.Outgoing.Write(message.ToJson(id, out string methodName));
             this._methodMappings.TryAdd(id, methodName);
             this._logger.LogInformation($"Internal Send - {id} {methodName}", id, methodName);
@@ -139,9 +139,9 @@ namespace DeribitClient
         {
             bool fwd = true;
             // Handle Errors -> Handle Heartbeat Requests
-            fwd &= HandleErrors(response);
-            fwd &= HandleHeartbeats(response);
-            fwd &= HandleInternals(response);
+            fwd &= this.HandleErrors(response);
+            fwd &= this.HandleHeartbeats(response);
+            fwd &= this.HandleInternals(response);
 
             return fwd;
         }
@@ -169,7 +169,7 @@ namespace DeribitClient
             var error = this._serverErrorHandler.ValidateDictionary(response);
             if (error is not null)
             {
-                OnServerError?.Invoke(this, error);
+                this.OnServerError?.Invoke(this, error);
                 return false;
             }
 
@@ -192,7 +192,7 @@ namespace DeribitClient
                     if ((response["params"] as Dictionary<string, object>)["type"] as string == "test_request")
                     {
                         var msg = new TestRequest();
-                        InternalSend(msg);
+                        this.InternalSend(msg);
                         this._logger.LogInformation("Sent Test Request");
                     }
                 }

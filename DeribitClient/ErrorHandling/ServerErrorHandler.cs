@@ -9,8 +9,8 @@ namespace DeribitClient.Validator
         private JsonSerializerSettings settings;
         public ServerErrorHandler()
         {
-            settings = new JsonSerializerSettings();
-            settings.NullValueHandling = NullValueHandling.Ignore;
+            this.settings = new JsonSerializerSettings();
+            this.settings.NullValueHandling = NullValueHandling.Ignore;
         }
 
         public virtual ServerSideException ValidateJson(string json)

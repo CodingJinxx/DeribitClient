@@ -49,7 +49,7 @@ namespace DeribitClient
             if (this._connectionState != this.Connected)
             {
                 this._connectionState = this.Connected;
-                OnConnectionChanged?.Invoke(this, this._connectionState);
+                this.OnConnectionChanged?.Invoke(this, this._connectionState);
             }
         }
 
@@ -59,7 +59,7 @@ namespace DeribitClient
             this._tokenSource = new CancellationTokenSource();
             this.Incoming = new XChannel<string>();
             this.Outgoing = new XChannel<string>();
-            await _webSocket.ConnectAsync(new Uri(this._settings.ServerAddress), this._tokenSource.Token);
+            await this._webSocket.ConnectAsync(new Uri(this._settings.ServerAddress), this._tokenSource.Token);
             this._incomingWebsocketConsumer(this._tokenSource.Token);
             this._outgoingChannelConsumer(this._tokenSource.Token);
             this.MonitorConnection();
@@ -70,7 +70,7 @@ namespace DeribitClient
             this.Incoming.CancelChannel();
             this.Outgoing.CancelChannel();
 
-            await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closed connection", this._tokenSource.Token);
+            await this._webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closed connection", this._tokenSource.Token);
             this._tokenSource.Cancel();
             this._webSocket.Dispose();
             this.MonitorConnection();
@@ -91,7 +91,7 @@ namespace DeribitClient
                 while (!token.IsCancellationRequested)
                 {
                     this.MonitorConnection();
-                    if (Connected)
+                    if (this.Connected)
                     {
                         var buffer = new ArraySegment<byte>(new byte[2048]);
                         string response = "";
@@ -102,7 +102,7 @@ namespace DeribitClient
                             {
                                 do
                                 {
-                                    result = await _webSocket.ReceiveAsync(buffer, CancellationToken.None);
+                                    result = await this._webSocket.ReceiveAsync(buffer, CancellationToken.None);
                                     ms.Write(buffer.Array, buffer.Offset, result.Count);
                                 } while (!result.EndOfMessage);
 
@@ -123,7 +123,7 @@ namespace DeribitClient
                             throw new Exception("Empty Response Received");
                         }
 
-                        Incoming.Write(response);
+                        this.Incoming.Write(response);
                     }
                 }
             }
@@ -139,7 +139,7 @@ namespace DeribitClient
                 while (!token.IsCancellationRequested)
                 {
                     this.MonitorConnection();
-                    if (Connected)
+                    if (this.Connected)
                     {
                         var message = await this.Outgoing.Read();
                         ArraySegment<byte> encodedMessage = Encoding.UTF8.GetBytes(message);
